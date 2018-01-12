@@ -7,8 +7,10 @@
     # Compute chanceOfMove=min (1, exp(-newWord)/exp(-currWord)) <---- this is MCMC
     # with prob chanceOfMove, set newDyckWord to be our current dyckWord, otherwise keep current dyckWord as my state
 
+import matplotlib.pyplot as plt
 import numpy as np
 
+import math
 import pdb
 import random
 import sys
@@ -46,22 +48,22 @@ def makeMove(i,j,dyckWord): #this function takes in a switch and outputs a new v
                 newList.append(1) #change the jth position to 1
             else:
                 newList.append(letter) #copy dyckWord into list
-    if isValid(newList)== True: #isValid function checks if my 10 move makes a valid dyckWord
-        return DyckWord(newList)
+    if isValid(newList): #isValid function checks if my 10 move makes a valid dyckWord
+        return newList
     else:
         return oldWord #if not a valid move
     
 def markovMove(dyckWord):#markovMove function
     length=len(dyckWord) #pick random i,j between 1 and length
-    i=randrange(1,length/2)
-    j=randrange(1,length/2)
+    i=random.randrange(1,length/2)
+    j=random.randrange(1,length/2) # TODO: why is this only [1, length/2) ?
     newWord=makeMove(i,j,dyckWord)
     return newWord
 
 def movingWithProb(currWord,newWord): #assigns probabilities to moves
     currWordEnergy=fasterEnergyFunction(currWord) # calculates energy
     newWordEnergy=fasterEnergyFunction(newWord) # then calculates energy
-    probability= (min(1, exp(-newWordEnergy)/exp(-currWordEnergy))).n() #MCMC Part!!!!
+    probability= min(1, np.exp(-newWordEnergy)/np.exp(-currWordEnergy)) #MCMC Part!!!!
     ran=random.random()
     if ran <= probability:  #sets new dyckword to be current state
         return newWord
@@ -150,15 +152,15 @@ def randomDyckWord(n):
 
 start_time = time.time()
 
-n=1000
-startWord = randomDyckWord(7)
-outPutSamples= myProject(startWord, 1000, 1000, 6)
-# startWord = DyckWord([1 for i in range(n)] + [0 for i in range(n)])
-# outPutSamples= myProject(startWord, 50000, 2000, 100)
+n=100
+mixingTimeT, sampleInterval, numOfSamples = 50000, 2000, 100
+# startWord = randomDyckWord(7)
+# outPutSamples= myProject(startWord, 1000, 1000, 6)
+startWord = [1]*n + [0]*n
+outPutSamples= myProject(startWord, mixingTimeT, sampleInterval, numOfSamples)
 
 end_time = time.time()
-print("Elapsed time was %g seconds" % (end_time - start_time))
-
+print("Elapsed time was {:.0f} seconds.".format(end_time - start_time))
 
 #compute contact distances
 cd_sums = [0 for i in range(2*n)]
@@ -168,9 +170,9 @@ for sample in outPutSamples:
 
 cd_sums = list(cd_sums)
 
-pdb.set_trace()
-
-p1 =list_plot(cd_sums[4:], color='red', size=5)
+# p1 = list_plot(cd_sums[4:], color='red', size=5)
+plt.scatter(range(1, len(cd_sums)-3), cd_sums[4:])
+plt.savefig("cds_MCMC_thermo_{}n_{}ini_{}int.png".format(n, mixingTimeT, sampleInterval))
 
 # out1 = open('cds_ MCMC_thermo_1000n_50000ini_2000int.txt', 'w')
 # for d, s in enumerate(cd_sums):
@@ -184,11 +186,10 @@ p1 =list_plot(cd_sums[4:], color='red', size=5)
     
 # out_file.close()
 
-def S(n,d): # cd for uniform distribution
-    if d%2==1:
-        return 0
-    return 1 / (d/2 +1) * binomial(d, d/2) * binomial(2*n - d -1, n - d/2 -1)
-
+# def S(n,d): # cd for uniform distribution
+#     if d%2==1:
+#         return 0
+#     return 1 / (d/2 +1) * binomial(d, d/2) * binomial(2*n - d -1, n - d/2 -1)
 
 # r = 100 / catalan_number(1000)
 # p2 = list_plot([r*S(1000, d) for d in range(4, 2000, 1)], color='green', size=5)
