@@ -7,6 +7,9 @@
     # Compute chanceOfMove=min (1, exp(-newWord)/exp(-currWord)) <---- this is MCMC
     # with prob chanceOfMove, set newDyckWord to be our current dyckWord, otherwise keep current dyckWord as my state
 
+import numpy as np
+
+import pdb
 import random
 import sys
 import time
@@ -65,7 +68,13 @@ def movingWithProb(currWord,newWord): #assigns probabilities to moves
     else: #keeps current dyckword as our current state
         return currWord
 
-def myProject(startWord, mixingTimeT, sampleInterval, numOfSamples):# initialword, t , collect every x-amount of steps, number of samples that I want
+def myProject(startWord, mixingTimeT, sampleInterval, numOfSamples):
+    """
+    startWord: word to start with
+    mixingTimeT: t
+    sampleInterval: collect every x-amount of steps
+    numOfSamples: number of samples that I want
+    """
     samples=[]#an empty list that will append the samples
     newWord=markovMove(startWord)
     currWord=startWord
@@ -116,66 +125,6 @@ def fasterEnergyFunction(word):
 
     return (-.4*root_deg +(2.3*num_leaves) +1.3*int_nodes) - .1*num_edges
 
-fasterEnergyFunction(DyckWord([1,1,1,0,1,0,0,1,1,1,0,1,0,0,0,1,0,0,1,1,1,0,0,0]))
-
-# When you want to run the program
-outPutSamples= myProject(CompleteDyckWords_size(7).random_element(), 1000, 1000, 6)
-# for word in outPutSamples:
-#     tree=word.to_ordered_tree()
-#     tree.to_poset().show()
-
-# In[14]:
-
-start_time = time.time()
-
-n=1000
-startWord = DyckWord([1 for i in range(n)] + [0 for i in range(n)])
-outPutSamples= myProject(startWord, 50000, 2000, 100)
-#for word in outPutSamples:
-#    tree=word.to_ordered_tree()
-#    tree.to_poset().show()# ... do stuff
-
-
-end_time = time.time()
-print("Elapsed time was %g seconds" % (end_time - start_time))
-
-
-#compute contact distances
-cd_sums = [0 for i in range(2*n)]
-for sample in outPutSamples:
-    cds = contactDistances(sample)
-    cd_sums = map(add, cd_sums, cds)
-
-out1 = open('cds_ MCMC_thermo_1000n_50000ini_2000int.txt', 'w')
-for d, s in enumerate(cd_sums):
-    out1.write(str(d) + "\t" + str(s) + "\n")
-out1.close()
-
-
-out_file = open('MCMC_thermo_1000n_50000ini_2000int.txt', 'w')
-for s in outPutSamples:
-    out_file.write(str(s)+"\n")
-    
-out_file.close()
-
-# In[17]:
-
-list_plot(cd_sums[4:])
-
-# In[30]:
-
-def S(n,d): # cd for uniform distribution
-    if d%2==1:
-        return 0
-    return 1 / (d/2 +1) * binomial(d, d/2) * binomial(2*n - d -1, n - d/2 -1)
-
-p1 =list_plot(cd_sums[4:], color='red', size=5)
-r = 100 / catalan_number(1000)
-p2 = list_plot([r*S(1000, d) for d in range(4, 2000, 1)], color='green', size=5)
-show(p1+p2)
-print [r*S(1000, d).n() for d in range(0, 20, 1)]
-
-# In[11]:
 
 def contactDistances(word): #For any dyck word, returns the contact distances of the corresponding matching
     # formatted as a list l of length 2n, where l[i] is the number of pairs of cd i
@@ -191,7 +140,61 @@ def contactDistances(word): #For any dyck word, returns the contact distances of
             cds[dist]+=1
     return cds
 
-# In[12]:
 
-test_word = DyckWord([1,1,1,0,1,0,0,1,0,0])
-contactDistances(test_word)
+def randomDyckWord(n):
+    while True:
+        candidate = np.random.permutation([1]*n + [0]*n).tolist()
+        if isValid(candidate):
+            return candidate
+
+
+start_time = time.time()
+
+n=1000
+startWord = randomDyckWord(7)
+outPutSamples= myProject(startWord, 1000, 1000, 6)
+# startWord = DyckWord([1 for i in range(n)] + [0 for i in range(n)])
+# outPutSamples= myProject(startWord, 50000, 2000, 100)
+
+end_time = time.time()
+print("Elapsed time was %g seconds" % (end_time - start_time))
+
+
+#compute contact distances
+cd_sums = [0 for i in range(2*n)]
+for sample in outPutSamples:
+    cds = contactDistances(sample)
+    cd_sums = map(add, cd_sums, cds)
+
+cd_sums = list(cd_sums)
+
+pdb.set_trace()
+
+p1 =list_plot(cd_sums[4:], color='red', size=5)
+
+# out1 = open('cds_ MCMC_thermo_1000n_50000ini_2000int.txt', 'w')
+# for d, s in enumerate(cd_sums):
+#     out1.write(str(d) + "\t" + str(s) + "\n")
+# out1.close()
+
+
+# out_file = open('MCMC_thermo_1000n_50000ini_2000int.txt', 'w')
+# for s in outPutSamples:
+#     out_file.write(str(s)+"\n")
+    
+# out_file.close()
+
+def S(n,d): # cd for uniform distribution
+    if d%2==1:
+        return 0
+    return 1 / (d/2 +1) * binomial(d, d/2) * binomial(2*n - d -1, n - d/2 -1)
+
+
+# r = 100 / catalan_number(1000)
+# p2 = list_plot([r*S(1000, d) for d in range(4, 2000, 1)], color='green', size=5)
+# show(p1+p2)
+# print [r*S(1000, d).n() for d in range(0, 20, 1)]
+
+### for testing contactDistances
+# test_word = DyckWord([1,1,1,0,1,0,0,1,0,0])
+# contactDistances(test_word)
