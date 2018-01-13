@@ -7,10 +7,11 @@
     # Compute chanceOfMove=min (1, exp(-newWord)/exp(-currWord)) <---- this is MCMC
     # with prob chanceOfMove, set newDyckWord to be our current dyckWord, otherwise keep current dyckWord as my state
 
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 
-from functools import lru_cache
 import math
 import pdb
 import random
@@ -20,6 +21,7 @@ import timeit
 from operator import add
 
 opt_num = 3
+np.seterr("raise")
 
 def listHash(lst):
     h = 1234
@@ -167,7 +169,7 @@ def contactDistances(word): #For any dyck word, returns the contact distances of
 
 start_time = time.time()
 
-n=100
+n=500
 mixingTimeT, sampleInterval, numOfSamples = 50000, 2000, 100
 # outPutSamples= myProject(startWord, 1000, 1000, 6)
 startWord = [1]*n + [0]*n
@@ -186,7 +188,9 @@ cd_sums = list(cd_sums)
 
 # p1 = list_plot(cd_sums[4:], color='red', size=5)
 plt.scatter(range(1, len(cd_sums)-3), cd_sums[4:])
-plt.savefig("cds_MCMC_thermo_{}n_{}ini_{}int_afterOpt{}.png".format(n, mixingTimeT, sampleInterval, opt_num))
+plot_name = "cds_MCMC_thermo_{}n_{}ini_{}int_afterOpt{}.png".format(n, mixingTimeT, sampleInterval, opt_num)
+print("saving figure to: {}".format(plot_name))
+plt.savefig(plot_name)
 
 # out1 = open('cds_ MCMC_thermo_1000n_50000ini_2000int.txt', 'w')
 # for d, s in enumerate(cd_sums):
