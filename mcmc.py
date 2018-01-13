@@ -56,46 +56,6 @@ def findPos(i, j, dyckWord):
     assert -1 not in [pos1, pos0]
     return pos1, pos0
 
-def makeMove(i,j,dyckWord): #this function takes in a switch and outputs a new valid dyckWord
-    counter1=0 # counts the ith positon of 1
-    counter0=0 # counts the jth postion of 0
-    oldWord=dyckWord
-    newList=[] #list that contains dyckWords
-    for letter in oldWord:
-        if letter==1: 
-            counter1+=1 #counting the 1s
-            if counter1==i:
-                newList.append(0)#change the ith position to 0
-            else:
-                newList.append(letter)
-        if letter==0:
-            counter0+=1 #counting the 0s
-            if counter0==j: 
-                newList.append(1) #change the jth position to 1
-            else:
-                newList.append(letter) #copy dyckWord into list
-    if isValid(newList):
-        return newList
-    else:
-        return oldWord
-    
-def markovMove(dyckWord):#markovMove function
-    length=len(dyckWord) #pick random i,j between 1 and length
-    i=random.randrange(1,length/2)
-    j=random.randrange(1,length/2) # TODO: why is this only [1, length/2) ?
-    newWord=makeMove(i,j,dyckWord)
-    return newWord
-
-def movingWithProb(currWord,newWord): #assigns probabilities to moves
-    currWordEnergy=fasterEnergyFunction(currWord) # calculates energy
-    newWordEnergy=fasterEnergyFunction(newWord) # then calculates energy
-    probability= min(1, np.exp(-newWordEnergy)/np.exp(-currWordEnergy)) #MCMC Part!!!!
-    ran=random.random()
-    if ran <= probability:  #sets new dyckword to be current state
-        return newWord
-    else: #keeps current dyckword as our current state
-        return currWord
-
 def combinedMove(currWord):
     currWordEnergy = fasterEnergyFunction(currWord) # calculates energy before modifying currWord
 
@@ -125,7 +85,6 @@ def myProject(startWord, mixingTimeT, sampleInterval, numOfSamples):
     numOfSamples: number of samples that I want
     """
     samples=[]#an empty list that will append the samples
-    # newWord=markovMove(startWord)
     currWord=startWord
     for i in range(mixingTimeT):  #I need my movingWithProb to run mixingTimeT amount of times (while loop)
         # newWord=markovMove(currWord)
@@ -197,19 +156,10 @@ def contactDistances(word): #For any dyck word, returns the contact distances of
             cds[dist]+=1
     return cds
 
-
-def randomDyckWord(n):
-    while True:
-        candidate = np.random.permutation([1]*n + [0]*n).tolist()
-        if isValid(candidate):
-            return candidate
-
-
 start_time = time.time()
 
 n=100
 mixingTimeT, sampleInterval, numOfSamples = 50000, 2000, 100
-# startWord = randomDyckWord(7)
 # outPutSamples= myProject(startWord, 1000, 1000, 6)
 startWord = [1]*n + [0]*n
 outPutSamples= myProject(startWord, mixingTimeT, sampleInterval, numOfSamples)
