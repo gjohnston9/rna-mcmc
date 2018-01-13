@@ -19,7 +19,13 @@ import time
 import timeit
 from operator import add
 
-opt_num = 2
+opt_num = 3
+
+def listHash(lst):
+    h = 1234
+    for index, num in enumerate(lst):
+        h ^= num * (index + 1)
+    return ((h >> 32) ^ h);
 
 def isValid(dyckWord, end):
     """
@@ -109,9 +115,9 @@ def myProject(startWord, mixingTimeT, sampleInterval, numOfSamples):
 
 # energy function rewritten by Anna to be faster and avoid recursion depth issues
 def fasterEnergyFunction(word, cache={}):
-    tup = tuple(word)
-    if tup in cache:
-        return cache[tup]
+    hsh = listHash(word)
+    if hsh in cache:
+        return cache[hsh]
 
     root_deg = 0
     num_leaves = 0
@@ -141,7 +147,7 @@ def fasterEnergyFunction(word, cache={}):
         candidate=-1
 
     answer = (-.4*root_deg +(2.3*num_leaves) +1.3*int_nodes) - .1*num_edges
-    cache[tup] = answer
+    cache[hsh] = answer
     return answer
 
 
