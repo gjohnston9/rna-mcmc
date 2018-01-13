@@ -19,12 +19,15 @@ import time
 import timeit
 from operator import add
 
-opt_num = 1
+opt_num = 2
 
-def isValid(dyckWord): #this function checks for valid dyckWords/ballot sequences
+def isValid(dyckWord, end):
+    """
+    this function checks for valid dyckWords/ballot sequences, ignoring letters past the `end` index
+    """
     counter1=0
     counter0=0
-    for letter in dyckWord:
+    for letter in dyckWord[:end+1]:
         if letter ==1:
             counter1+=1
         else:
@@ -65,7 +68,7 @@ def combinedMove(currWord):
     pos1, pos0 = findPos(i, j, currWord)
     currWord[pos1], currWord[pos0] = currWord[pos0], currWord[pos1] # swap values; currWord is now newWord
 
-    if not isValid(currWord):
+    if not isValid(currWord, end=max(pos1, pos0)):
         currWord[pos1], currWord[pos0] = currWord[pos0], currWord[pos1] # no move to make; swap back
         return
 
