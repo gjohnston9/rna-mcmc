@@ -10,6 +10,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
+from functools import lru_cache
 import math
 import pdb
 import random
@@ -17,6 +18,8 @@ import sys
 import time
 import timeit
 from operator import add
+
+opt_num = 1
 
 def isValid(dyckWord): #this function checks for valid dyckWords/ballot sequences
     counter1=0
@@ -29,6 +32,29 @@ def isValid(dyckWord): #this function checks for valid dyckWords/ballot sequence
         if counter0> counter1:
             return False 
     return True
+
+def findPos(i, j, dyckWord):
+    """
+    finds position of ith 1 and jth 0
+    """
+    counter1 = 0 # keep track of how many 1's have been found
+    counter0 = 0 # keep track of how many 0's have been found
+    pos1 = -1
+    pos0 = -1
+    for index, letter in enumerate(dyckWord):
+        if letter == 1:
+            counter1 += 1
+            if counter1 == i:
+                pos1 = index # we found the ith 1
+        else:
+            counter0 += 1
+            if counter0 == j:
+                pos0 = index # we found the jth 0
+        if -1 not in [pos1, pos0]:
+            break
+
+    assert -1 not in [pos1, pos0]
+    return pos1, pos0
 
 def makeMove(i,j,dyckWord): #this function takes in a switch and outputs a new valid dyckWord
     counter1=0 # counts the ith positon of 1
@@ -48,10 +74,10 @@ def makeMove(i,j,dyckWord): #this function takes in a switch and outputs a new v
                 newList.append(1) #change the jth position to 1
             else:
                 newList.append(letter) #copy dyckWord into list
-    if isValid(newList): #isValid function checks if my 10 move makes a valid dyckWord
+    if isValid(newList):
         return newList
     else:
-        return oldWord #if not a valid move
+        return oldWord
     
 def markovMove(dyckWord):#markovMove function
     length=len(dyckWord) #pick random i,j between 1 and length
@@ -70,6 +96,27 @@ def movingWithProb(currWord,newWord): #assigns probabilities to moves
     else: #keeps current dyckword as our current state
         return currWord
 
+def combinedMove(currWord):
+    currWordEnergy = fasterEnergyFunction(currWord) # calculates energy before modifying currWord
+
+    length=len(currWord) #pick random i,j between 1 and length
+    i=random.randrange(1,length/2)
+    j=random.randrange(1,length/2) # TODO: why is this only [1, length/2) ?
+    pos1, pos0 = findPos(i, j, currWord)
+    currWord[pos1], currWord[pos0] = currWord[pos0], currWord[pos1] # swap values; currWord is now newWord
+
+    if not isValid(currWord):
+        currWord[pos1], currWord[pos0] = currWord[pos0], currWord[pos1] # no move to make; swap back
+        return
+
+    newWordEnergy = fasterEnergyFunction(currWord) # calculates energy
+    probability= min(1, np.exp(-newWordEnergy)/np.exp(-currWordEnergy)) #MCMC Part!!!!
+    ran=random.random()
+    if ran <= probability:  # leave new dyckword as current state
+        return
+    else: # revert to old dyckWord
+        currWord[pos1], currWord[pos0] = currWord[pos0], currWord[pos1] # swap back
+
 def myProject(startWord, mixingTimeT, sampleInterval, numOfSamples):
     """
     startWord: word to start with
@@ -78,26 +125,32 @@ def myProject(startWord, mixingTimeT, sampleInterval, numOfSamples):
     numOfSamples: number of samples that I want
     """
     samples=[]#an empty list that will append the samples
-    newWord=markovMove(startWord)
+    # newWord=markovMove(startWord)
     currWord=startWord
     for i in range(mixingTimeT):  #I need my movingWithProb to run mixingTimeT amount of times (while loop)
-        newWord=markovMove(currWord)
-        currWord=movingWithProb(currWord,newWord)
+        # newWord=markovMove(currWord)
+        # currWord=movingWithProb(currWord,newWord)
+        combinedMove(currWord)
     sampCount=0
     stepCount=0
     while sampCount < numOfSamples:  #I need my program to stop after I have collected numOfSamples amount of samples
         if stepCount==sampleInterval: #after sampleInterval amount of steps, append the currWord to my list 'samples' (for loop)
-            samples.append(currWord)
+            samples.append(list(currWord))
             stepCount=0
             sampCount+=1
         else:
-            newWord=markovMove(currWord)
-            currWord=movingWithProb(currWord,newWord)
+            # newWord=markovMove(currWord)
+            # currWord=movingWithProb(currWord,newWord)
+            combinedMove(currWord)
             stepCount+=1
     return samples #return samples
 
 # energy function rewritten by Anna to be faster and avoid recursion depth issues
-def fasterEnergyFunction(word): 
+def fasterEnergyFunction(word, cache={}):
+    tup = tuple(word)
+    if tup in cache:
+        return cache[tup]
+
     root_deg = 0
     num_leaves = 0
     int_nodes = 0
@@ -125,7 +178,9 @@ def fasterEnergyFunction(word):
         prev_letter = letter
         candidate=-1
 
-    return (-.4*root_deg +(2.3*num_leaves) +1.3*int_nodes) - .1*num_edges
+    answer = (-.4*root_deg +(2.3*num_leaves) +1.3*int_nodes) - .1*num_edges
+    cache[tup] = answer
+    return answer
 
 
 def contactDistances(word): #For any dyck word, returns the contact distances of the corresponding matching
@@ -172,7 +227,7 @@ cd_sums = list(cd_sums)
 
 # p1 = list_plot(cd_sums[4:], color='red', size=5)
 plt.scatter(range(1, len(cd_sums)-3), cd_sums[4:])
-plt.savefig("cds_MCMC_thermo_{}n_{}ini_{}int.png".format(n, mixingTimeT, sampleInterval))
+plt.savefig("cds_MCMC_thermo_{}n_{}ini_{}int_afterOpt{}.png".format(n, mixingTimeT, sampleInterval, opt_num))
 
 # out1 = open('cds_ MCMC_thermo_1000n_50000ini_2000int.txt', 'w')
 # for d, s in enumerate(cd_sums):
