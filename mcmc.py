@@ -72,8 +72,8 @@ def combinedMove(currWord):
     currWordEnergy = fasterEnergyFunction(currWord) # calculates energy before modifying currWord
 
     length=len(currWord) #pick random i,j between 1 and length
-    i=random.randrange(1,length/2)
-    j=random.randrange(1,length/2) # TODO: why is this only [1, length/2) ?
+    i=random.randrange(1,length/2 + 1)
+    j=random.randrange(1,length/2 + 1)
     pos1, pos0 = findPos(i, j, currWord)
     currWord[pos1], currWord[pos0] = currWord[pos0], currWord[pos1] # swap values; currWord is now newWord
 
