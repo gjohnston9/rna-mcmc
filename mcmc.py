@@ -12,6 +12,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 
+import argparse
 import math
 import os
 import pdb
@@ -68,13 +69,21 @@ def findPos(i, j, dyckWord):
     assert -1 not in [pos1, pos0]
     return pos1, pos0
 
-def combinedMove(currWord):
+def combinedMove(currWord, move_type):
     currWordEnergy = fasterEnergyFunction(currWord) # calculates energy before modifying currWord
 
     length=len(currWord) # pick random i,j between 1 and length
-    i=random.randrange(1,length/2 + 1)
-    j=random.randrange(1,length/2 + 1)
-    pos1, pos0 = findPos(i, j, currWord)
+
+    if move_type == 'by_count':
+        i = random.randrange(1,length/2 + 1)
+        j = random.randrange(1,length/2 + 1)
+        pos1, pos0 = findPos(i, j, currWord)
+    elif move_type == 'by_position':
+        pos1 = random.randrange(0, length)
+        pos0 = random.randrange(0, length)
+        if currWord[pos1] == currWord[pos0]: # self-loop
+            return
+
     currWord[pos1], currWord[pos0] = currWord[pos0], currWord[pos1] # swap values; currWord is now newWord
 
     if not isValid(currWord, end=max(pos1, pos0)):
@@ -89,17 +98,18 @@ def combinedMove(currWord):
     else: # revert to old dyckWord
         currWord[pos1], currWord[pos0] = currWord[pos0], currWord[pos1] # swap back
 
-def myProject(startWord, mixingTimeT, sampleInterval, numOfSamples):
+def myProject(startWord, mixingTimeT, sampleInterval, numOfSamples, move_type):
     """
     startWord: word to start with
     mixingTimeT: t
     sampleInterval: collect every x-amount of steps
     numOfSamples: number of samples that I want
+    move_type: one of 'by_count' or 'by_position', passed to combinedMove
     """
     samples=[] # an empty list that will append the samples
     currWord=startWord
     for i in range(mixingTimeT):  # I need my movingWithProb to run mixingTimeT amount of times (while loop)
-        combinedMove(currWord)
+        combinedMove(currWord, move_type)
     sampCount=0
     stepCount=0
     while sampCount < numOfSamples:  # I need my program to stop after I have collected numOfSamples amount of samples
@@ -108,7 +118,7 @@ def myProject(startWord, mixingTimeT, sampleInterval, numOfSamples):
             stepCount=0
             sampCount+=1
         else:
-            combinedMove(currWord)
+            combinedMove(currWord, move_type)
             stepCount+=1
     return samples # return samples
 
@@ -172,13 +182,26 @@ def S(n,d): # cd for uniform distribution
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+
+    move_selection_group = parser.add_mutually_exclusive_group(required=True)
+    move_selection_group.add_argument('--by_count', action='store_true', help='when making a move, switch the ith 1 with the jth 0')
+    move_selection_group.add_argument('--by_position', action='store_true', help='when making a move, switch the letter at position i with the letter at position j')
+
+    args = parser.parse_args()
+
+    if args.by_count:
+        move_type = 'by_count'
+    else:
+        move_type = 'by_position'
+
     start_time = time.time()
 
     n=500
     mixingTimeT, sampleInterval, numOfSamples = 50000, 2000, 100
     # outPutSamples= myProject(startWord, 1000, 1000, 6)
     startWord = [1]*n + [0]*n
-    outPutSamples= myProject(startWord, mixingTimeT, sampleInterval, numOfSamples)
+    outPutSamples= myProject(startWord, mixingTimeT, sampleInterval, numOfSamples, move_type)
 
     end_time = time.time()
     print('Elapsed time was {:.0f} seconds.'.format(end_time - start_time))
@@ -194,7 +217,7 @@ if __name__ == '__main__':
     # p1 = list_plot(cd_sums[4:], color='red', size=5)
     plt.scatter(range(1, len(cd_sums)-3), cd_sums[4:])
     plt.title('simulation with n={}'.format(n))
-    plot_name = 'cds_MCMC_thermo_{}n_{}ini_{}int_afterOpt{}.png'.format(n, mixingTimeT, sampleInterval, opt_num)
+    plot_name = 'cds_MCMC_thermo_{}n_{}ini_{}int_afterOpt{}_moveType={}.png'.format(n, mixingTimeT, sampleInterval, opt_num, move_type)
     plot_path = os.path.join('plots', plot_name)
     print('saving figure to: {}'.format(plot_path))
     plt.savefig(plot_path)
