@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import math
+import os
 import pdb
 import random
 import sys
@@ -188,9 +189,11 @@ cd_sums = list(cd_sums)
 
 # p1 = list_plot(cd_sums[4:], color='red', size=5)
 plt.scatter(range(1, len(cd_sums)-3), cd_sums[4:])
+plt.title("simulation with n={}".format(n))
 plot_name = "cds_MCMC_thermo_{}n_{}ini_{}int_afterOpt{}.png".format(n, mixingTimeT, sampleInterval, opt_num)
-print("saving figure to: {}".format(plot_name))
-plt.savefig(plot_name)
+plot_path = os.path.join("plots", plot_name)
+print("saving figure to: {}".format(plot_path))
+plt.savefig(plot_path)
 
 # out1 = open('cds_ MCMC_thermo_1000n_50000ini_2000int.txt', 'w')
 # for d, s in enumerate(cd_sums):
