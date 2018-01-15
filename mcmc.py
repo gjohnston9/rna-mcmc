@@ -69,9 +69,7 @@ def findPos(i, j, dyckWord):
     assert -1 not in [pos1, pos0]
     return pos1, pos0
 
-def combinedMove(currWord, move_type):
-    currWordEnergy = fasterEnergyFunction(currWord) # calculates energy before modifying currWord
-
+def combinedMove(currWord, move_type, distribution):
     length=len(currWord) # pick random i,j between 1 and length
 
     if move_type == 'by_count':
@@ -84,32 +82,41 @@ def combinedMove(currWord, move_type):
         if currWord[pos1] == currWord[pos0]: # self-loop
             return
 
+    if distribution == 'nntm':
+        currWordEnergy = fasterEnergyFunction(currWord) # calculates energy before modifying currWord
+
     currWord[pos1], currWord[pos0] = currWord[pos0], currWord[pos1] # swap values; currWord is now newWord
 
     if not isValid(currWord, end=max(pos1, pos0)):
         currWord[pos1], currWord[pos0] = currWord[pos0], currWord[pos1] # no move to make; swap back
         return
 
-    newWordEnergy = fasterEnergyFunction(currWord) # calculates energy
-    probability= min(1, np.exp(-newWordEnergy)/np.exp(-currWordEnergy)) # MCMC Part!!!!
-    ran=random.random()
-    if ran <= probability:  # leave new dyckword as current state
-        return
-    else: # revert to old dyckWord
-        currWord[pos1], currWord[pos0] = currWord[pos0], currWord[pos1] # swap back
+    if distribution == 'nntm': # if distribution is uniform, we make the above move 100% of the time (never swap back)
+        newWordEnergy = fasterEnergyFunction(currWord) # calculates energy
+        probability= min(1, np.exp(-newWordEnergy)/np.exp(-currWordEnergy)) # MCMC Part!!!!
+        ran=random.random()
+        if ran <= probability:  # leave new dyckword as current state
+            return
+        else: # revert to old dyckWord
+            currWord[pos1], currWord[pos0] = currWord[pos0], currWord[pos1] # swap back
 
-def myProject(startWord, mixingTimeT, sampleInterval, numOfSamples, move_type):
+
+def myProject(startWord, mixingTimeT, sampleInterval, numOfSamples, move_type, distribution):
     """
     startWord: word to start with
     mixingTimeT: t
     sampleInterval: collect every x-amount of steps
     numOfSamples: number of samples that I want
     move_type: one of 'by_count' or 'by_position', passed to combinedMove
+    distribution: one of 'uniform' or 'nntm', passed to combinedMove
     """
+    assert move_type in ('by_count', 'by_position')
+    assert distribution in ('uniform', 'nntm')
+
     samples=[] # an empty list that will append the samples
     currWord=startWord
     for i in range(mixingTimeT):  # I need my movingWithProb to run mixingTimeT amount of times (while loop)
-        combinedMove(currWord, move_type)
+        combinedMove(currWord, move_type, distribution)
     sampCount=0
     stepCount=0
     while sampCount < numOfSamples:  # I need my program to stop after I have collected numOfSamples amount of samples
@@ -118,7 +125,7 @@ def myProject(startWord, mixingTimeT, sampleInterval, numOfSamples, move_type):
             stepCount=0
             sampCount+=1
         else:
-            combinedMove(currWord, move_type)
+            combinedMove(currWord, move_type, distribution)
             stepCount+=1
     return samples # return samples
 
@@ -188,6 +195,10 @@ if __name__ == '__main__':
     move_selection_group.add_argument('--by_count', action='store_true', help='when making a move, switch the ith 1 with the jth 0')
     move_selection_group.add_argument('--by_position', action='store_true', help='when making a move, switch the letter at position i with the letter at position j')
 
+    distribution_selection_group = parser.add_mutually_exclusive_group(required=True)
+    distribution_selection_group.add_argument('--uniform', action='store_true', help='use a uniform distribution when choosing whether to make a move')
+    distribution_selection_group.add_argument('--nntm', action='store_true', help='use the ratio of energies as predicted by the nearest-neighbor thermodynamic model when choosing whether to make a move')
+
     args = parser.parse_args()
 
     if args.by_count:
@@ -195,13 +206,18 @@ if __name__ == '__main__':
     else:
         move_type = 'by_position'
 
+    if args.uniform:
+        distribution = 'uniform'
+    else:
+        distribution = 'nntm'
+
     start_time = time.time()
 
     n=500
     mixingTimeT, sampleInterval, numOfSamples = 50000, 2000, 100
     # outPutSamples= myProject(startWord, 1000, 1000, 6)
     startWord = [1]*n + [0]*n
-    outPutSamples= myProject(startWord, mixingTimeT, sampleInterval, numOfSamples, move_type)
+    outPutSamples= myProject(startWord, mixingTimeT, sampleInterval, numOfSamples, move_type, distribution)
 
     end_time = time.time()
     print('Elapsed time was {:.0f} seconds.'.format(end_time - start_time))
@@ -217,7 +233,7 @@ if __name__ == '__main__':
     # p1 = list_plot(cd_sums[4:], color='red', size=5)
     plt.scatter(range(1, len(cd_sums)-3), cd_sums[4:])
     plt.title('simulation with n={}'.format(n))
-    plot_name = 'cds_MCMC_thermo_{}n_{}ini_{}int_afterOpt{}_moveType={}.png'.format(n, mixingTimeT, sampleInterval, opt_num, move_type)
+    plot_name = 'cds_n={}_afterOpt{}_moveType={}_dist={}.png'.format(n, opt_num, move_type, distribution)
     plot_path = os.path.join('plots', plot_name)
     print('saving figure to: {}'.format(plot_path))
     plt.savefig(plot_path)
