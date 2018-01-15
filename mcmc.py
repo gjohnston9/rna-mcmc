@@ -22,7 +22,7 @@ import timeit
 from operator import add
 
 opt_num = 3
-np.seterr("raise")
+np.seterr('raise')
 
 def listHash(lst):
     h = 1234
@@ -71,7 +71,7 @@ def findPos(i, j, dyckWord):
 def combinedMove(currWord):
     currWordEnergy = fasterEnergyFunction(currWord) # calculates energy before modifying currWord
 
-    length=len(currWord) #pick random i,j between 1 and length
+    length=len(currWord) # pick random i,j between 1 and length
     i=random.randrange(1,length/2 + 1)
     j=random.randrange(1,length/2 + 1)
     pos1, pos0 = findPos(i, j, currWord)
@@ -82,7 +82,7 @@ def combinedMove(currWord):
         return
 
     newWordEnergy = fasterEnergyFunction(currWord) # calculates energy
-    probability= min(1, np.exp(-newWordEnergy)/np.exp(-currWordEnergy)) #MCMC Part!!!!
+    probability= min(1, np.exp(-newWordEnergy)/np.exp(-currWordEnergy)) # MCMC Part!!!!
     ran=random.random()
     if ran <= probability:  # leave new dyckword as current state
         return
@@ -96,25 +96,21 @@ def myProject(startWord, mixingTimeT, sampleInterval, numOfSamples):
     sampleInterval: collect every x-amount of steps
     numOfSamples: number of samples that I want
     """
-    samples=[]#an empty list that will append the samples
+    samples=[] # an empty list that will append the samples
     currWord=startWord
-    for i in range(mixingTimeT):  #I need my movingWithProb to run mixingTimeT amount of times (while loop)
-        # newWord=markovMove(currWord)
-        # currWord=movingWithProb(currWord,newWord)
+    for i in range(mixingTimeT):  # I need my movingWithProb to run mixingTimeT amount of times (while loop)
         combinedMove(currWord)
     sampCount=0
     stepCount=0
-    while sampCount < numOfSamples:  #I need my program to stop after I have collected numOfSamples amount of samples
-        if stepCount==sampleInterval: #after sampleInterval amount of steps, append the currWord to my list 'samples' (for loop)
+    while sampCount < numOfSamples:  # I need my program to stop after I have collected numOfSamples amount of samples
+        if stepCount==sampleInterval: # after sampleInterval amount of steps, append the currWord to my list 'samples' (for loop)
             samples.append(list(currWord))
             stepCount=0
             sampCount+=1
         else:
-            # newWord=markovMove(currWord)
-            # currWord=movingWithProb(currWord,newWord)
             combinedMove(currWord)
             stepCount+=1
-    return samples #return samples
+    return samples # return samples
 
 # energy function rewritten by Anna to be faster and avoid recursion depth issues
 def fasterEnergyFunction(word, cache={}):
@@ -128,22 +124,22 @@ def fasterEnergyFunction(word, cache={}):
     num_edges = len(word) / 2
     curr_depth = 0
     candidate_int_node_depths = []
-    prev_letter = 0 #caereful here if you add more details to energy function
+    prev_letter = 0 # careful here if you add more details to energy function
     
     for letter in word:
         if candidate_int_node_depths != [] and candidate_int_node_depths[len(candidate_int_node_depths) - 1] == curr_depth:
                     candidate = candidate_int_node_depths.pop()
-        if letter == 1: #open of arc
+        if letter == 1: # open of arc
             if curr_depth==0:
                 root_deg+=1
-            if prev_letter == 1: #two opens in a row
+            if prev_letter == 1: # two opens in a row
                 candidate_int_node_depths.append(curr_depth)
             curr_depth+=1
-        else: #close
-            if prev_letter == 1: #leaf
+        else: # close
+            if prev_letter == 1: # leaf
                 num_leaves+=1
             else: # two closes in a row
-                if candidate == curr_depth: #internal node
+                if candidate == curr_depth: # internal node
                     int_nodes+=1
             curr_depth-=1
         prev_letter = letter
@@ -154,69 +150,72 @@ def fasterEnergyFunction(word, cache={}):
     return answer
 
 
-def contactDistances(word): #For any dyck word, returns the contact distances of the corresponding matching
+def contactDistances(word): # For any dyck word, returns the contact distances of the corresponding matching
     # formatted as a list l of length 2n, where l[i] is the number of pairs of cd i
     l = len(word)
     cds = [0 for i in range(l)]
-    unpaired = [] #stack of positions of unpaired ('s
+    unpaired = [] # stack of positions of unpaired ('s
     for pos, letter in enumerate(word):
-        if letter == 1: #start of an arc
+        if letter == 1: # start of an arc
             unpaired.append(pos)
-        else: #end of arc
+        else: # end of arc
             begin = unpaired.pop()
             dist = pos-begin-1
             cds[dist]+=1
     return cds
 
-start_time = time.time()
 
-n=500
-mixingTimeT, sampleInterval, numOfSamples = 50000, 2000, 100
-# outPutSamples= myProject(startWord, 1000, 1000, 6)
-startWord = [1]*n + [0]*n
-outPutSamples= myProject(startWord, mixingTimeT, sampleInterval, numOfSamples)
-
-end_time = time.time()
-print("Elapsed time was {:.0f} seconds.".format(end_time - start_time))
-
-#compute contact distances
-cd_sums = [0 for i in range(2*n)]
-for sample in outPutSamples:
-    cds = contactDistances(sample)
-    cd_sums = map(add, cd_sums, cds)
-
-cd_sums = list(cd_sums)
-
-# p1 = list_plot(cd_sums[4:], color='red', size=5)
-plt.scatter(range(1, len(cd_sums)-3), cd_sums[4:])
-plt.title("simulation with n={}".format(n))
-plot_name = "cds_MCMC_thermo_{}n_{}ini_{}int_afterOpt{}.png".format(n, mixingTimeT, sampleInterval, opt_num)
-plot_path = os.path.join("plots", plot_name)
-print("saving figure to: {}".format(plot_path))
-plt.savefig(plot_path)
-
-# out1 = open('cds_ MCMC_thermo_1000n_50000ini_2000int.txt', 'w')
-# for d, s in enumerate(cd_sums):
-#     out1.write(str(d) + "\t" + str(s) + "\n")
-# out1.close()
+def S(n,d): # cd for uniform distribution
+    if d%2==1:
+        return 0
+    return 1 / (d/2 +1) * binomial(d, d/2) * binomial(2*n - d -1, n - d/2 -1)
 
 
-# out_file = open('MCMC_thermo_1000n_50000ini_2000int.txt', 'w')
-# for s in outPutSamples:
-#     out_file.write(str(s)+"\n")
-    
-# out_file.close()
+if __name__ == '__main__':
+    start_time = time.time()
 
-# def S(n,d): # cd for uniform distribution
-#     if d%2==1:
-#         return 0
-#     return 1 / (d/2 +1) * binomial(d, d/2) * binomial(2*n - d -1, n - d/2 -1)
+    n=500
+    mixingTimeT, sampleInterval, numOfSamples = 50000, 2000, 100
+    # outPutSamples= myProject(startWord, 1000, 1000, 6)
+    startWord = [1]*n + [0]*n
+    outPutSamples= myProject(startWord, mixingTimeT, sampleInterval, numOfSamples)
 
-# r = 100 / catalan_number(1000)
-# p2 = list_plot([r*S(1000, d) for d in range(4, 2000, 1)], color='green', size=5)
-# show(p1+p2)
-# print [r*S(1000, d).n() for d in range(0, 20, 1)]
+    end_time = time.time()
+    print('Elapsed time was {:.0f} seconds.'.format(end_time - start_time))
 
-### for testing contactDistances
-# test_word = DyckWord([1,1,1,0,1,0,0,1,0,0])
-# contactDistances(test_word)
+    # compute contact distances
+    cd_sums = [0 for i in range(2*n)]
+    for sample in outPutSamples:
+        cds = contactDistances(sample)
+        cd_sums = map(add, cd_sums, cds)
+
+    cd_sums = list(cd_sums)
+
+    # p1 = list_plot(cd_sums[4:], color='red', size=5)
+    plt.scatter(range(1, len(cd_sums)-3), cd_sums[4:])
+    plt.title('simulation with n={}'.format(n))
+    plot_name = 'cds_MCMC_thermo_{}n_{}ini_{}int_afterOpt{}.png'.format(n, mixingTimeT, sampleInterval, opt_num)
+    plot_path = os.path.join('plots', plot_name)
+    print('saving figure to: {}'.format(plot_path))
+    plt.savefig(plot_path)
+
+    # out1 = open('cds_ MCMC_thermo_1000n_50000ini_2000int.txt', 'w')
+    # for d, s in enumerate(cd_sums):
+    #     out1.write(str(d) + '\t' + str(s) + '\n')
+    # out1.close()
+
+
+    # out_file = open('MCMC_thermo_1000n_50000ini_2000int.txt', 'w')
+    # for s in outPutSamples:
+    #     out_file.write(str(s)+'\n')
+        
+    # out_file.close()
+
+    # r = 100 / catalan_number(1000)
+    # p2 = list_plot([r*S(1000, d) for d in range(4, 2000, 1)], color='green', size=5)
+    # show(p1+p2)
+    # print [r*S(1000, d).n() for d in range(0, 20, 1)]
+
+    ### for testing contactDistances
+    # test_word = DyckWord([1,1,1,0,1,0,0,1,0,0])
+    # contactDistances(test_word)
