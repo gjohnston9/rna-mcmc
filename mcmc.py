@@ -199,6 +199,8 @@ if __name__ == '__main__':
     distribution_selection_group.add_argument('--uniform', action='store_true', help='use a uniform distribution when choosing whether to make a move')
     distribution_selection_group.add_argument('--nntm', action='store_true', help='use the ratio of energies as predicted by the nearest-neighbor thermodynamic model when choosing whether to make a move')
 
+    parser.add_argument('-n', type=int, help='value of n to use', required=True)
+
     args = parser.parse_args()
 
     if args.by_count:
@@ -211,9 +213,10 @@ if __name__ == '__main__':
     else:
         distribution = 'nntm'
 
+    n=args.n
+
     start_time = time.time()
 
-    n=500
     mixingTimeT, sampleInterval, numOfSamples = 50000, 2000, 100
     startWord = [1]*n + [0]*n
     outPutSamples= myProject(startWord, mixingTimeT, sampleInterval, numOfSamples, move_type, distribution)
