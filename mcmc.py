@@ -131,9 +131,9 @@ def myProject(startWord, mixingTimeT, sampleInterval, numOfSamples, move_type, d
 
 # energy function rewritten by Anna to be faster and avoid recursion depth issues
 def fasterEnergyFunction(word, cache={}):
-    hsh = listHash(word)
-    if hsh in cache:
-        return cache[hsh]
+    # hsh = listHash(word)
+    # if hsh in cache:
+        # return cache[hsh]
 
     root_deg = 0
     num_leaves = 0
@@ -163,7 +163,7 @@ def fasterEnergyFunction(word, cache={}):
         candidate=-1
 
     answer = (-.4*root_deg +(2.3*num_leaves) +1.3*int_nodes) - .1*num_edges
-    cache[hsh] = answer
+    # cache[hsh] = answer
     return answer
 
 
@@ -215,7 +215,6 @@ if __name__ == '__main__':
 
     n=500
     mixingTimeT, sampleInterval, numOfSamples = 50000, 2000, 100
-    # outPutSamples= myProject(startWord, 1000, 1000, 6)
     startWord = [1]*n + [0]*n
     outPutSamples= myProject(startWord, mixingTimeT, sampleInterval, numOfSamples, move_type, distribution)
 
