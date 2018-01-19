@@ -22,14 +22,6 @@ import time
 import timeit
 from operator import add
 
-opt_num = 3
-np.seterr('raise')
-
-def listHash(lst):
-    h = 1234
-    for index, num in enumerate(lst):
-        h ^= num * (index + 1)
-    return ((h >> 32) ^ h);
 
 def isValid(dyckWord, end):
     """
@@ -45,6 +37,7 @@ def isValid(dyckWord, end):
         if counter0> counter1:
             return False 
     return True
+
 
 def findPos(i, j, dyckWord):
     """
@@ -68,6 +61,7 @@ def findPos(i, j, dyckWord):
 
     assert -1 not in [pos1, pos0]
     return pos1, pos0
+
 
 def combinedMove(currWord, move_type, distribution):
     length=len(currWord) # pick random i,j between 1 and length
@@ -129,12 +123,9 @@ def myProject(startWord, mixingTimeT, sampleInterval, numOfSamples, move_type, d
             stepCount+=1
     return samples # return samples
 
-# energy function rewritten by Anna to be faster and avoid recursion depth issues
-def fasterEnergyFunction(word, cache={}):
-    # hsh = listHash(word)
-    # if hsh in cache:
-        # return cache[hsh]
 
+# energy function rewritten by Anna to be faster and avoid recursion depth issues
+def fasterEnergyFunction(word):
     root_deg = 0
     num_leaves = 0
     int_nodes = 0
@@ -162,9 +153,7 @@ def fasterEnergyFunction(word, cache={}):
         prev_letter = letter
         candidate=-1
 
-    answer = (-.4*root_deg +(2.3*num_leaves) +1.3*int_nodes) - .1*num_edges
-    # cache[hsh] = answer
-    return answer
+    return (-.4*root_deg +(2.3*num_leaves) +1.3*int_nodes) - .1*num_edges
 
 
 def contactDistances(word): # For any dyck word, returns the contact distances of the corresponding matching
@@ -183,8 +172,9 @@ def contactDistances(word): # For any dyck word, returns the contact distances o
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
+    np.seterr('raise')
 
+    parser = argparse.ArgumentParser()
     parser.add_argument('n', type=int, help='value of n to use')
     parser.add_argument('mixing_time', type=int)
     parser.add_argument('sample_interval', type=int)
