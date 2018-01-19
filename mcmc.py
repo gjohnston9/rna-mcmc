@@ -182,14 +182,13 @@ def contactDistances(word): # For any dyck word, returns the contact distances o
     return cds
 
 
-def S(n,d): # cd for uniform distribution
-    if d%2==1:
-        return 0
-    return 1 / (d/2 +1) * binomial(d, d/2) * binomial(2*n - d -1, n - d/2 -1)
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+
+    parser.add_argument('n', type=int, help='value of n to use')
+    parser.add_argument('mixing_time', type=int)
+    parser.add_argument('sample_interval', type=int)
+    parser.add_argument('num_samples', type=int)
 
     move_selection_group = parser.add_mutually_exclusive_group(required=True)
     move_selection_group.add_argument('--by_count', action='store_true', help='when making a move, switch the ith 1 with the jth 0')
@@ -198,8 +197,6 @@ if __name__ == '__main__':
     distribution_selection_group = parser.add_mutually_exclusive_group(required=True)
     distribution_selection_group.add_argument('--uniform', action='store_true', help='use a uniform distribution when choosing whether to make a move')
     distribution_selection_group.add_argument('--nntm', action='store_true', help='use the ratio of energies as predicted by the nearest-neighbor thermodynamic model when choosing whether to make a move')
-
-    parser.add_argument('-n', type=int, help='value of n to use', required=True)
 
     args = parser.parse_args()
 
@@ -213,50 +210,29 @@ if __name__ == '__main__':
     else:
         distribution = 'nntm'
 
-    n=args.n
-
     start_time = time.time()
 
-    mixingTimeT, sampleInterval, numOfSamples = 50000, 2000, 100
-    startWord = [1]*n + [0]*n
-    outPutSamples= myProject(startWord, mixingTimeT, sampleInterval, numOfSamples, move_type, distribution)
+    startWord = [1] * args.n + [0] * args.n
+    outPutSamples = myProject(startWord, args.mixing_time, args.sample_interval, args.num_samples, move_type, distribution)
 
     end_time = time.time()
     print('Elapsed time was {:.0f} seconds.'.format(end_time - start_time))
 
     # compute contact distances
-    cd_sums = [0 for i in range(2*n)]
+    cd_sums = [0 for i in range(2 * args.n)]
     for sample in outPutSamples:
         cds = contactDistances(sample)
         cd_sums = map(add, cd_sums, cds)
 
     cd_sums = list(cd_sums)
 
-    # p1 = list_plot(cd_sums[4:], color='red', size=5)
-    plt.scatter(range(1, len(cd_sums)-3), cd_sums[4:])
-    plt.title('simulation with n={}'.format(n))
-    plot_name = 'cds_n={}_afterOpt{}_moveType={}_dist={}.png'.format(n, opt_num, move_type, distribution)
-    plot_path = os.path.join('plots', plot_name)
-    print('saving figure to: {}'.format(plot_path))
-    plt.savefig(plot_path)
+    cd_sums_name = 'sums_n={}_moveType={}_dist={}_mixingTime={}_sampleInterval={}_numOfSamples={}.txt'.format(args.n, move_type, distribution, args.mixing_time, args.sample_interval, args.num_samples)
+    cd_sums_name = os.path.join('data', cd_sums_name)
+    print('saving cd_sums to: {}'.format(cd_sums_name))
 
-    # out1 = open('cds_ MCMC_thermo_1000n_50000ini_2000int.txt', 'w')
-    # for d, s in enumerate(cd_sums):
-    #     out1.write(str(d) + '\t' + str(s) + '\n')
-    # out1.close()
+    with open(cd_sums_name, 'w') as f:
+        f.writelines('{}\n'.format(i) for i in cd_sums)
 
-
-    # out_file = open('MCMC_thermo_1000n_50000ini_2000int.txt', 'w')
-    # for s in outPutSamples:
-    #     out_file.write(str(s)+'\n')
-        
-    # out_file.close()
-
-    # r = 100 / catalan_number(1000)
-    # p2 = list_plot([r*S(1000, d) for d in range(4, 2000, 1)], color='green', size=5)
-    # show(p1+p2)
-    # print [r*S(1000, d).n() for d in range(0, 20, 1)]
-
-    ### for testing contactDistances
-    # test_word = DyckWord([1,1,1,0,1,0,0,1,0,0])
-    # contactDistances(test_word)
+    # ### for testing contactDistances
+    # # test_word = DyckWord([1,1,1,0,1,0,0,1,0,0])
+    # # contactDistances(test_word)
