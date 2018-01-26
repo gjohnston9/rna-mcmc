@@ -4,10 +4,18 @@ import os
 import pdb
 
 
-def S(n,d): # cd for uniform distribution
+def contacts(n,d): # cd for uniform distribution
     if d % 2 == 1:
         return 0
-    return 1 / (d/2 +1) * binomial(d, d/2) * binomial(2*n - d -1, n - d/2 -1)
+    return 1.0 / (d/2 +1) * binomial(d, d/2) * binomial(2*n - d -1, n - d/2 -1)
+
+
+def leaves(n, k):
+    return (1.0 / n) * binomial(n, k) * binomial(n, k-1)
+
+
+def root_deg(n, r):
+    return (r / (n * 1.0)) * binomial(2*n -1 - r, n - 1)
 
 
 def construct_plot(data1, data2, use_log):
@@ -27,18 +35,20 @@ def construct_plot(data1, data2, use_log):
     return my_plot
 
 
-def solo_plot(data, use_log):
-    if use_log:
-        data = [log(d, base=10) for d in data]
+def make_plots(source_base_name, output_base_name, prefix, expectation_function, args):
+        source_name = os.path.join('data', prefix + source_base_name)
+        with open(source_name, 'r') as f:
+            experimental_data = list(map(int, f.readlines()))
+        r = args.num_samples / catalan_number(args.n)
+        expectation_data = [r * expectation_function(args.n, x) for x in range(len(experimental_data))]
+        reg_plot = construct_plot(expectation_data, experimental_data, use_log=False)
+        log_plot = construct_plot(expectation_data, experimental_data, use_log=True)
 
-    my_plot = list_plot(data, color='red', size=5)
-
-    max_val = max(data)
-    min_val = 0
-
-    my_plot.set_axes_range(ymin=min_val, ymax=max_val)
-
-    return my_plot
+        for (my_plot, plot_prefix) in ((reg_plot, ''), (log_plot, 'log_')):
+            plot_name = prefix + plot_prefix + output_base_name
+            plot_path = os.path.join('plots', plot_name)
+            print('saving {} to: {}'.format(prefix[:-1], plot_path))
+            my_plot.save(plot_path)
 
 
 if __name__ == '__main__':
@@ -59,49 +69,15 @@ if __name__ == '__main__':
         distribution = 'uniform'
     else:
         distribution = 'nntm'
+
+
+    source_base_name = 'n={}_dist={}_mixingTime={}_sampleInterval={}_numSamples={}.txt'.format(args.n, distribution, args.mixing_time, args.sample_interval, args.num_samples)
+    plot_base_name = 'n={}_dist={}.png'.format(args.n, distribution)
+
+    make_plots(source_base_name, plot_base_name, 'cd_sums_', contacts, args)
+    make_plots(source_base_name, plot_base_name, 'num_leaves_', leaves, args)
+    make_plots(source_base_name, plot_base_name, 'root_degree_', root_deg, args)
     
-    cd_sums_name = 'cd_sums_n={}_dist={}_mixingTime={}_sampleInterval={}_numSamples={}.txt'.format(args.n, distribution, args.mixing_time, args.sample_interval, args.num_samples)
-    cd_sums_name = os.path.join('data', cd_sums_name)
-
-    with open(cd_sums_name, 'r') as f:
-        cd_sums_data = list(map(int, f.readlines()))
-
-    r = args.num_samples / catalan_number(args.n)
-    expectation_data = [r*S(args.n, d) for d in range(4, len(cd_sums_data))]
-
-    cd_sums_reg_plot = construct_plot(expectation_data, cd_sums_data[4:], use_log=False)
-    cd_sums_log_plot = construct_plot(expectation_data, cd_sums_data[4:], use_log=True)
-
-
-
-
-
-    num_leaves_name = 'num_leaves_n={}_dist={}_mixingTime={}_sampleInterval={}_numSamples={}.txt'.format(args.n, distribution, args.mixing_time, args.sample_interval, args.num_samples)
-    num_leaves_name = os.path.join('data', num_leaves_name)
-
-    with open(num_leaves_name, 'r') as f:
-        num_leaves_data = list(map(int, f.readlines()))
-
-    num_leaves_reg_plot = solo_plot(num_leaves_data, use_log=False)
-    num_leaves_log_plot = solo_plot(num_leaves_data, use_log=True)
-
-
-
-
-
-    base_plot_name = 'n={}_dist={}.png'.format(args.n, distribution)
-    
-    for (my_plot, prefix, name) in (
-        (cd_sums_reg_plot, 'cd_sums_', 'cd_sums_reg_plot'),
-        (cd_sums_log_plot, 'cd_sums_log_', 'cd_sums_log_plot'),
-        (num_leaves_reg_plot, 'num_leaves_', 'num_leaves_reg_plot'),
-        (num_leaves_log_plot, 'num_leaves_log_', 'num_leaves_log_plot')):
-
-        plot_name = prefix + base_plot_name
-        plot_path = os.path.join('plots', plot_name)
-        print('saving {} to: {}'.format(name, plot_path))
-        my_plot.save(plot_path)
-
     # plt.ylabel('frequency')
     # plt.xlabel('contact distance')
     # plt.title('simulation with n={}'.format(n))
