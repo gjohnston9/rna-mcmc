@@ -69,41 +69,6 @@ def combined_move(curr_word, distribution):
         else: # revert to old dyck_word
             curr_word[pos1], curr_word[pos0] = curr_word[pos0], curr_word[pos1] # swap back
 
-    return
-
-
-def my_project(start_word, mixing_time, sample_interval, num_samples, distribution):
-    """
-    start_word: word to start with
-    mixing_time: t
-    sample_interval: collect every x-amount of steps
-    num_samples: number of samples that I want
-    distribution: one of 'uniform' or 'nntm', passed to combined_move
-    """
-    assert distribution in ('uniform', 'nntm')
-
-    print('running my_project with mixing_time={}, sample_interval={}, num_samples={}'.format(
-        mixing_time,
-        sample_interval,
-        num_samples))
-
-    samples = [] # an empty list that will append the samples
-    curr_word = start_word
-    # curr_energy = get_arcs_init_energy(len(start_word)/2)
-    for i in range(mixing_time):  # I need my movingWithProb to run mixing_time amount of times (while loop)
-        combined_move(curr_word, distribution)
-    samp_count = 0
-    step_count = 0
-    while samp_count < num_samples:  # I need my program to stop after I have collected num_samples amount of samples
-        if step_count == sample_interval: # after sample_interval amount of steps, append the curr_word to my list 'samples' (for loop)
-            samples.append(list(curr_word))
-            step_count = 0
-            samp_count += 1
-        else:
-            combined_move(curr_word, distribution)
-            step_count += 1
-    return samples
-
 
 # energy function rewritten by Anna to be faster and avoid recursion depth issues
 def calculate_energy(word):
@@ -134,7 +99,7 @@ def calculate_energy(word):
         prev_letter = letter
         candidate=-1
 
-    return (-.4*root_deg +(2.3*num_leaves) +1.3*int_nodes) - .1*num_edges
+    return (-.4*root_deg + 2.3*num_leaves +1.3*int_nodes) - .1*num_edges
 
 
 def contact_distances(word): # For any dyck word, returns the contact distances of the corresponding matching
@@ -154,8 +119,8 @@ def contact_distances(word): # For any dyck word, returns the contact distances 
 
 def num_leaves(word):
     leaves = 0
-    for i, char in enumerate(word[:-1]):
-        if (char == 1) and word[i+1] == 0:
+    for char1, char2 in zip(word[:-1], word[1:]):
+        if (char1 == 1) and (char2 == 0):
             leaves += 1
     return leaves
 
@@ -171,6 +136,87 @@ def root_degree(word):
         else:
             curr_depth -= 1
     return degree
+
+
+def height(word):
+    tree_height = 0
+    curr_depth = 0
+    for char in word:
+        if char == 1:
+            curr_depth += 1
+            tree_height = max(tree_height, curr_depth)
+        else:
+            curr_depth -= 1
+    return tree_height
+
+
+def my_project(start_word, mixing_time, sample_interval, num_samples, distribution):
+    """
+    start_word: word to start with
+    mixing_time: t
+    sample_interval: collect every x-amount of steps
+    num_samples: number of samples that I want
+    distribution: one of 'uniform' or 'nntm', passed to combined_move
+    """
+    assert distribution in ('uniform', 'nntm')
+
+    print('running my_project with mixing_time={}, sample_interval={}, num_samples={}'.format(
+        mixing_time,
+        sample_interval,
+        num_samples))
+
+    n = len(start_word) / 2
+    # samples = [] # an empty list that will append the samples
+    curr_word = start_word
+    # curr_energy = get_arcs_init_energy(len(start_word)/2)
+    for i in range(mixing_time):  # I need my movingWithProb to run mixing_time amount of times (while loop)
+        combined_move(curr_word, distribution)
+    samp_count = 0
+    step_count = 0
+    checkpoint = int(num_samples / 10)
+
+    cd_sums = [0] * (2 * n)
+    num_leaves_frequency = [0] * n
+    root_degree_frequency = [0] * n
+    height_frequency = [0] * n
+
+    while samp_count < num_samples:  # I need my program to stop after I have collected num_samples amount of samples
+        if step_count == sample_interval: # after sample_interval amount of steps, append the curr_word to my list 'samples' (for loop)
+            # samples.append(list(curr_word))
+            update(curr_word, num_leaves_frequency, root_degree_frequency, height_frequency) ### calculate updated statistics for curr_word
+            cds = contact_distances(curr_word)
+            cd_sums = map(add, cd_sums, cds)
+
+            step_count = 0
+            samp_count += 1
+            if samp_count % checkpoint == 0:
+                print('collected {} of {} samples'.format(samp_count, num_samples))
+        else:
+            combined_move(curr_word, distribution)
+            step_count += 1
+    return {
+        'cd_sums' : cd_sums,
+        'num_leaves_frequency' : num_leaves_frequency,
+        'root_degree_frequency' : root_degree_frequency,
+        'height_frequency' : height_frequency}
+
+
+def update(word, num_leaves_frequency, root_degree_frequency, height_frequency):
+    leaves = num_leaves(word)
+    num_leaves_frequency[leaves] += 1
+
+    degree = root_degree(word)
+    root_degree_frequency[degree] += 1
+
+    tree_height = height(word)
+    height_frequency[tree_height] += 1
+
+
+def write_to_file(data, base_name, prefix):
+        path = os.path.join('data', prefix + base_name)
+        print('saving {} to: {}'.format(prefix[:-1], base_name))
+        with open(path, 'w') as f:
+            f.writelines('{}\n'.format(i) for i in data)
 
 
 if __name__ == '__main__':
@@ -198,48 +244,20 @@ if __name__ == '__main__':
 
     start_word = [1]*args.n + [0]*args.n
 
-    output_samples = my_project(start_word, args.mixing_time, args.sample_interval, args.num_samples, distribution)
+    results = my_project(start_word, args.mixing_time, args.sample_interval, args.num_samples, distribution)
+    cd_sums = results['cd_sums']
+    num_leaves_frequency = results['num_leaves_frequency']
+    root_degree_frequency = results['root_degree_frequency']
+    height_frequency = results['height_frequency']
+
 
     end_time = time.time()
     print('Elapsed time was {:.0f} seconds.'.format(end_time - start_time))
 
-    # compute contact distances and num_leaves
-    cd_sums = [0] * (2 * args.n)
-    num_leaves_frequency = [0] * args.n
-    root_degree_frequency = [0] * args.n
-
-    for word in output_samples:
-        cds = contact_distances(word)
-        cd_sums = map(add, cd_sums, cds)
-
-        leaves = num_leaves(word)
-        num_leaves_frequency[leaves] += 1
-
-        degree = root_degree(word)
-        root_degree_frequency[degree] += 1
-
     cd_sums = list(cd_sums)
 
-    cd_sums_name = 'cd_sums_n={}_dist={}_mixingTime={}_sampleInterval={}_numSamples={}.txt'.format(args.n, distribution, args.mixing_time, args.sample_interval, args.num_samples)
-    cd_sums_name = os.path.join('data', cd_sums_name)
-    print('saving cd_sums to: {}'.format(cd_sums_name))
-
-    with open(cd_sums_name, 'w') as f:
-        f.writelines('{}\n'.format(i) for i in cd_sums)
-
-
-    num_leaves_name = 'num_leaves_n={}_dist={}_mixingTime={}_sampleInterval={}_numSamples={}.txt'.format(args.n, distribution, args.mixing_time, args.sample_interval, args.num_samples)
-    num_leaves_name = os.path.join('data', num_leaves_name)
-    print('saving num_leaves to: {}'.format(num_leaves_name))
-
-    with open(num_leaves_name, 'w') as f:
-        f.writelines('{}\n'.format(i) for i in num_leaves_frequency)
-
-
-
-    root_degree_name = 'root_degree_n={}_dist={}_mixingTime={}_sampleInterval={}_numSamples={}.txt'.format(args.n, distribution, args.mixing_time, args.sample_interval, args.num_samples)
-    root_degree_name = os.path.join('data', root_degree_name)
-    print('saving root_degree to: {}'.format(root_degree_name))
-
-    with open(root_degree_name, 'w') as f:
-        f.writelines('{}\n'.format(i) for i in root_degree_frequency)
+    base_name = 'n={}_dist={}_mixingTime={}_sampleInterval={}_numSamples={}.txt'.format(args.n, distribution, args.mixing_time, args.sample_interval, args.num_samples)
+    write_to_file(cd_sums, base_name, 'cd_sums_')
+    write_to_file(num_leaves_frequency, base_name, 'num_leaves_')
+    write_to_file(root_degree_frequency, base_name, 'root_degree_')
+    write_to_file(height_frequency, base_name, 'height_')
