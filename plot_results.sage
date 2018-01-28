@@ -18,31 +18,45 @@ def root_deg(n, r):
     return (r / (n * 1.0)) * binomial(2*n -1 - r, n - 1)
 
 
-def construct_plot(data1, data2, use_log):
+def construct_plot(expectation_data, experimental_data, size, xlabel, use_log, truncate_left=False, truncate_right=False):
+    if truncate_right:
+        for i, item in enumerate(experimental_data[::-1]):
+            if item != 0:
+                right_lim = len(experimental_data) - i
+                break
+        else:
+            raise ValueError('no non-zero elements found')
+
+        right_lim += 5
+        expectation_data = expectation_data[:right_lim]
+        experimental_data = experimental_data[:right_lim]
+
     if use_log:
-        data1 = [log(d, base=10) for d in data1]
-        data2 = [log(d, base=10) for d in data2]
+        expectation_data = [log(d, base=10) for d in expectation_data]
+        experimental_data = [log(d, base=10) for d in experimental_data]
 
-    plot1 = list_plot(data1, color='green', size=5)
-    plot2 = list_plot(data2, color='red', size=5)
+    plot_expectation = list_plot(expectation_data, color='green', size=size, legend_label='expected values')
+    plot_experimental = list_plot(experimental_data, color='red', size=size, legend_label='experimental values')
 
-    max_val = max(itertools.chain(data1, data2))
+    max_val = max(itertools.chain(expectation_data, experimental_data))
     min_val = 0
 
-    my_plot = plot1 + plot2
+    my_plot = plot_expectation + plot_experimental
     my_plot.set_axes_range(ymin=min_val, ymax=max_val)
+    my_plot.axes_labels([xlabel, 'frequency'])
+    my_plot.set_legend_options(markerscale=8.0/size)
 
     return my_plot
 
 
-def make_plots(source_base_name, output_base_name, prefix, expectation_function, args):
+def make_plots(source_base_name, output_base_name, prefix, expectation_function, args, size, xlabel, truncate_left=False, truncate_right=False):
         source_name = os.path.join('data', prefix + source_base_name)
         with open(source_name, 'r') as f:
             experimental_data = list(map(int, f.readlines()))
         r = args.num_samples / catalan_number(args.n)
         expectation_data = [r * expectation_function(args.n, x) for x in range(len(experimental_data))]
-        reg_plot = construct_plot(expectation_data, experimental_data, use_log=False)
-        log_plot = construct_plot(expectation_data, experimental_data, use_log=True)
+        reg_plot = construct_plot(expectation_data, experimental_data, size, xlabel, use_log=False, truncate_left=truncate_left, truncate_right=truncate_right)
+        log_plot = construct_plot(expectation_data, experimental_data, size, xlabel, use_log=True, truncate_left=truncate_left, truncate_right=truncate_right)
 
         for (my_plot, plot_prefix) in ((reg_plot, ''), (log_plot, 'log_')):
             plot_name = prefix + plot_prefix + output_base_name
@@ -74,9 +88,9 @@ if __name__ == '__main__':
     source_base_name = 'n={}_dist={}_mixingTime={}_sampleInterval={}_numSamples={}.txt'.format(args.n, distribution, args.mixing_time, args.sample_interval, args.num_samples)
     plot_base_name = 'n={}_dist={}.png'.format(args.n, distribution)
 
-    make_plots(source_base_name, plot_base_name, 'cd_sums_', contacts, args)
-    make_plots(source_base_name, plot_base_name, 'num_leaves_', leaves, args)
-    make_plots(source_base_name, plot_base_name, 'root_degree_', root_deg, args)
+    make_plots(source_base_name, plot_base_name, 'cd_sums_', contacts, args, 5, 'contact distance')
+    make_plots(source_base_name, plot_base_name, 'num_leaves_', leaves, args, 5, 'number of leaves')
+    make_plots(source_base_name, plot_base_name, 'root_degree_', root_deg, args, 20, 'root degree', truncate_right=True)
     
     # plt.ylabel('frequency')
     # plt.xlabel('contact distance')
