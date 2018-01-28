@@ -1,3 +1,7 @@
+# R stuff
+.RData
+.Rhistory
+
 plots/
 prof/
 
