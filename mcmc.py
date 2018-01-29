@@ -105,7 +105,7 @@ def calculate_energy(word):
 def contact_distances(word): # For any dyck word, returns the contact distances of the corresponding matching
     # formatted as a list l of length 2n, where l[i] is the number of pairs of cd i
     l = len(word)
-    cds = [0 for i in range(l)]
+    cds = [0] * l
     unpaired = [] # stack of positions of unpaired ('s
     for pos, letter in enumerate(word):
         if letter == 1: # start of an arc
@@ -166,7 +166,6 @@ def my_project(start_word, mixing_time, sample_interval, num_samples, distributi
         num_samples))
 
     n = len(start_word) / 2
-    # samples = [] # an empty list that will append the samples
     curr_word = start_word
     # curr_energy = get_arcs_init_energy(len(start_word)/2)
     for i in range(mixing_time):  # I need my movingWithProb to run mixing_time amount of times (while loop)
@@ -176,9 +175,9 @@ def my_project(start_word, mixing_time, sample_interval, num_samples, distributi
     checkpoint = int(num_samples / 10)
 
     cd_sums = [0] * (2 * n)
-    num_leaves_frequency = [0] * n
-    root_degree_frequency = [0] * n
-    height_frequency = [0] * n
+    num_leaves_frequency = np.zeros(n, dtype='uint8')
+    root_degree_frequency = np.zeros(n, dtype='uint8')
+    height_frequency = np.zeros(n, dtype='uint8')
 
     ### one entry is filled in each time a sample is collected
     num_leaves_values = np.zeros(num_samples, dtype='uint8')
@@ -236,21 +235,6 @@ def update_samples(word, i, num_leaves_values, root_degree_values, height_values
     height_values[i] = tree_height
 
 
-def write_to_file(data, base_name, prefix, *dirs):
-        filename = os.path.join(os.path.join(*dirs), prefix + base_name) ### don't judge me
-        print('saving {} to: {}'.format(prefix[:-1], filename))
-        with open(filename, 'w') as f:
-            f.writelines('{}\n'.format(i) for i in data)
-
-
-def write_frequencies_to_file(data, base_name, prefix):
-    return write_to_file(data, base_name, prefix, 'data', 'by_frequency')
-
-
-def write_samples_to_file(data, base_name, prefix):
-    return write_to_file(data, base_name, prefix, 'data', 'by_sample')
-
-
 if __name__ == '__main__':
     np.seterr('raise')
     random.seed(1)
@@ -274,35 +258,35 @@ if __name__ == '__main__':
 
     start_time = time.time()
 
-    start_word = [1]*args.n + [0]*args.n
+    start_word = [1] * args.n + [0] * args.n
 
     results = my_project(start_word, args.mixing_time, args.sample_interval, args.num_samples, distribution)
+
+    ### np ndarrays
+    cd_sums = np.asarray(list(cd_sums))
     cd_sums = results['frequencies']['cd_sums']
     num_leaves_frequency = results['frequencies']['num_leaves']
     root_degree_frequency = results['frequencies']['root_degree']
     height_frequency = results['frequencies']['height']
-
-    ### np ndarrays
     num_leaves_values = results['samples']['num_leaves']
     root_degree_values = results['samples']['root_degree']
     height_values = results['samples']['height']
 
-
     end_time = time.time()
     print('Elapsed time was {:.0f} seconds.'.format(end_time - start_time))
 
-    cd_sums = list(cd_sums)
-
     base_name = 'n={}_dist={}_mixingTime={}_sampleInterval={}_numSamples={}.txt'.format(args.n, distribution, args.mixing_time, args.sample_interval, args.num_samples)
-    write_frequencies_to_file(cd_sums, base_name, 'cd_sums_')
-    write_frequencies_to_file(num_leaves_frequency, base_name, 'num_leaves_')
-    write_frequencies_to_file(root_degree_frequency, base_name, 'root_degree_')
-    write_frequencies_to_file(height_frequency, base_name, 'height_')
+    
+    for array, directory, prefix in (
+        (cd_sums, 'by_frequency', 'cd_sums_'),
+        (num_leaves_frequency, 'by_frequency', 'num_leaves_'),
+        (root_degree_frequency, 'by_frequency', 'root_degree_'),
+        (height_frequency, 'by_frequency', 'height_'),
 
-    for sample_values_array, prefix in (
-        (num_leaves_values, 'num_leaves_'),
-        (root_degree_values, 'root_degree_'),
-        (height_values, 'height_')):
+        (num_leaves_values, 'by_sample', 'num_leaves_'),
+        (root_degree_values, 'by_sample', 'root_degree_'),
+        (height_values, 'by_sample', 'height_')):
 
-        filename = os.path.join('data', 'by_sample', prefix + base_name)
-        np.savetxt(filename, sample_values_array, fmt='%d')
+        filename = os.path.join('data', directory, prefix + base_name)
+        print('saving {} to {}'.format(prefix + directory, filename))
+        np.savetxt(filename, array, fmt='%d')
