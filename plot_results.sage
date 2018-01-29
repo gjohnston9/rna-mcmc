@@ -31,6 +31,18 @@ def construct_plot(expectation_data, experimental_data, size, xlabel, use_log, t
         expectation_data = expectation_data[:right_lim]
         experimental_data = experimental_data[:right_lim]
 
+    if truncate_left:
+        for i, item in enumerate(experimental_data):
+            if item != 0:
+                left_lim = i
+                break
+        else:
+            raise ValueError('no non-zero elements found')
+
+        left_lim -= 5
+        expectation_data = expectation_data[left_lim:]
+        experimental_data = experimental_data[left_lim:]
+
     if use_log:
         expectation_data = [log(d, base=10) for d in expectation_data]
         experimental_data = [log(d, base=10) for d in experimental_data]
@@ -89,7 +101,7 @@ if __name__ == '__main__':
     plot_base_name = 'n={}_dist={}.png'.format(args.n, distribution)
 
     make_plots(source_base_name, plot_base_name, 'cd_sums_', contacts, args, 5, 'contact distance')
-    make_plots(source_base_name, plot_base_name, 'num_leaves_', leaves, args, 5, 'number of leaves')
+    make_plots(source_base_name, plot_base_name, 'num_leaves_', leaves, args, 5, 'number of leaves', truncate_right=True, truncate_left=True)
     make_plots(source_base_name, plot_base_name, 'root_degree_', root_deg, args, 20, 'root degree', truncate_right=True)
     
     # plt.ylabel('frequency')
