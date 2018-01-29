@@ -180,10 +180,16 @@ def my_project(start_word, mixing_time, sample_interval, num_samples, distributi
     root_degree_frequency = [0] * n
     height_frequency = [0] * n
 
+    ### one entry is filled in each time a sample is collected
+    num_leaves_values = np.zeros(num_samples, dtype='uint8')
+    root_degree_values = np.zeros(num_samples, dtype='uint8')
+    height_values = np.zeros(num_samples, dtype='uint8')
+
     while samp_count < num_samples:  # I need my program to stop after I have collected num_samples amount of samples
         if step_count == sample_interval: # after sample_interval amount of steps, append the curr_word to my list 'samples' (for loop)
             # samples.append(list(curr_word))
-            update(curr_word, num_leaves_frequency, root_degree_frequency, height_frequency) ### calculate updated statistics for curr_word
+            update_frequencies(curr_word, num_leaves_frequency, root_degree_frequency, height_frequency) ### calculate updated statistics for curr_word
+            update_samples(curr_word, samp_count, num_leaves_values, root_degree_values, height_values)
             cds = contact_distances(curr_word)
             cd_sums = map(add, cd_sums, cds)
 
@@ -195,13 +201,20 @@ def my_project(start_word, mixing_time, sample_interval, num_samples, distributi
             combined_move(curr_word, distribution)
             step_count += 1
     return {
-        'cd_sums' : cd_sums,
-        'num_leaves_frequency' : num_leaves_frequency,
-        'root_degree_frequency' : root_degree_frequency,
-        'height_frequency' : height_frequency}
+        'frequencies' : {
+            'cd_sums' : cd_sums,
+            'num_leaves' : num_leaves_frequency,
+            'root_degree' : root_degree_frequency,
+            'height' : height_frequency
+        },
+        'samples' : {
+            'num_leaves' : num_leaves_values,
+            'root_degree' : root_degree_values,
+            'height' : height_values
+        }}
 
 
-def update(word, num_leaves_frequency, root_degree_frequency, height_frequency):
+def update_frequencies(word, num_leaves_frequency, root_degree_frequency, height_frequency):
     leaves = num_leaves(word)
     num_leaves_frequency[leaves] += 1
 
@@ -212,11 +225,30 @@ def update(word, num_leaves_frequency, root_degree_frequency, height_frequency):
     height_frequency[tree_height] += 1
 
 
-def write_to_file(data, base_name, prefix):
-        path = os.path.join('data', prefix + base_name)
-        print('saving {} to: {}'.format(prefix[:-1], base_name))
-        with open(path, 'w') as f:
+def update_samples(word, i, num_leaves_values, root_degree_values, height_values):
+    leaves = num_leaves(word)
+    num_leaves_values[i] = leaves
+
+    degree = root_degree(word)
+    root_degree_values[i] = degree
+
+    tree_height = height(word)
+    height_values[i] = tree_height
+
+
+def write_to_file(data, base_name, prefix, *dirs):
+        filename = os.path.join(os.path.join(*dirs), prefix + base_name) ### don't judge me
+        print('saving {} to: {}'.format(prefix[:-1], filename))
+        with open(filename, 'w') as f:
             f.writelines('{}\n'.format(i) for i in data)
+
+
+def write_frequencies_to_file(data, base_name, prefix):
+    return write_to_file(data, base_name, prefix, 'data', 'by_frequency')
+
+
+def write_samples_to_file(data, base_name, prefix):
+    return write_to_file(data, base_name, prefix, 'data', 'by_sample')
 
 
 if __name__ == '__main__':
@@ -245,10 +277,15 @@ if __name__ == '__main__':
     start_word = [1]*args.n + [0]*args.n
 
     results = my_project(start_word, args.mixing_time, args.sample_interval, args.num_samples, distribution)
-    cd_sums = results['cd_sums']
-    num_leaves_frequency = results['num_leaves_frequency']
-    root_degree_frequency = results['root_degree_frequency']
-    height_frequency = results['height_frequency']
+    cd_sums = results['frequencies']['cd_sums']
+    num_leaves_frequency = results['frequencies']['num_leaves']
+    root_degree_frequency = results['frequencies']['root_degree']
+    height_frequency = results['frequencies']['height']
+
+    ### np ndarrays
+    num_leaves_values = results['samples']['num_leaves']
+    root_degree_values = results['samples']['root_degree']
+    height_values = results['samples']['height']
 
 
     end_time = time.time()
@@ -257,7 +294,15 @@ if __name__ == '__main__':
     cd_sums = list(cd_sums)
 
     base_name = 'n={}_dist={}_mixingTime={}_sampleInterval={}_numSamples={}.txt'.format(args.n, distribution, args.mixing_time, args.sample_interval, args.num_samples)
-    write_to_file(cd_sums, base_name, 'cd_sums_')
-    write_to_file(num_leaves_frequency, base_name, 'num_leaves_')
-    write_to_file(root_degree_frequency, base_name, 'root_degree_')
-    write_to_file(height_frequency, base_name, 'height_')
+    write_frequencies_to_file(cd_sums, base_name, 'cd_sums_')
+    write_frequencies_to_file(num_leaves_frequency, base_name, 'num_leaves_')
+    write_frequencies_to_file(root_degree_frequency, base_name, 'root_degree_')
+    write_frequencies_to_file(height_frequency, base_name, 'height_')
+
+    for sample_values_array, prefix in (
+        (num_leaves_values, 'num_leaves_'),
+        (root_degree_values, 'root_degree_'),
+        (height_values, 'height_')):
+
+        filename = os.path.join('data', 'by_sample', prefix + base_name)
+        np.savetxt(filename, sample_values_array, fmt='%d')

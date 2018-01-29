@@ -50,7 +50,7 @@ def construct_plot(expectation_data, experimental_data, size, xlabel, use_log, t
 
 
 def make_plots(source_base_name, output_base_name, prefix, expectation_function, args, size, xlabel, truncate_left=False, truncate_right=False):
-        source_name = os.path.join('data', prefix + source_base_name)
+        source_name = os.path.join('data', 'by_frequency', prefix + source_base_name)
         with open(source_name, 'r') as f:
             experimental_data = list(map(int, f.readlines()))
         r = args.num_samples / catalan_number(args.n)
