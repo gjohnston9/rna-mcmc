@@ -175,14 +175,14 @@ def my_project(start_word, mixing_time, sample_interval, num_samples, distributi
     checkpoint = int(num_samples / 10)
 
     cd_sums = [0] * (2 * n)
-    num_leaves_frequency = np.zeros(n, dtype='uint8')
-    root_degree_frequency = np.zeros(n, dtype='uint8')
-    height_frequency = np.zeros(n, dtype='uint8')
+    num_leaves_frequency = np.zeros(n, dtype='uint32')
+    root_degree_frequency = np.zeros(n, dtype='uint32')
+    height_frequency = np.zeros(n, dtype='uint32')
 
     ### one entry is filled in each time a sample is collected
-    num_leaves_values = np.zeros(num_samples, dtype='uint8')
-    root_degree_values = np.zeros(num_samples, dtype='uint8')
-    height_values = np.zeros(num_samples, dtype='uint8')
+    num_leaves_values = np.zeros(num_samples, dtype='uint32')
+    root_degree_values = np.zeros(num_samples, dtype='uint32')
+    height_values = np.zeros(num_samples, dtype='uint32')
 
     while samp_count < num_samples:  # I need my program to stop after I have collected num_samples amount of samples
         if step_count == sample_interval: # after sample_interval amount of steps, append the curr_word to my list 'samples' (for loop)
@@ -263,8 +263,8 @@ if __name__ == '__main__':
     results = my_project(start_word, args.mixing_time, args.sample_interval, args.num_samples, distribution)
 
     ### np ndarrays
-    cd_sums = np.asarray(list(cd_sums))
     cd_sums = results['frequencies']['cd_sums']
+    cd_sums = np.asarray(list(cd_sums))
     num_leaves_frequency = results['frequencies']['num_leaves']
     root_degree_frequency = results['frequencies']['root_degree']
     height_frequency = results['frequencies']['height']
