@@ -215,13 +215,13 @@ def my_project(start_word, mixing_time, sample_interval, num_samples, distributi
 
 def update_frequencies(word, num_leaves_frequency, root_degree_frequency, height_frequency):
     leaves = num_leaves(word)
-    num_leaves_frequency[leaves] += 1
+    num_leaves_frequency[leaves-1] += 1
 
     degree = root_degree(word)
-    root_degree_frequency[degree] += 1
+    root_degree_frequency[degree-1] += 1
 
     tree_height = height(word)
-    height_frequency[tree_height] += 1
+    height_frequency[tree_height-1] += 1
 
 
 def update_samples(word, i, num_leaves_values, root_degree_values, height_values):
@@ -237,7 +237,6 @@ def update_samples(word, i, num_leaves_values, root_degree_values, height_values
 
 if __name__ == '__main__':
     np.seterr('raise')
-    random.seed(1)
 
     parser = argparse.ArgumentParser()
     parser.add_argument('n', type=int, help='value of n to use')

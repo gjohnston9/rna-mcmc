@@ -18,6 +18,17 @@ def root_deg(n, r):
     return (r / (n * 1.0)) * binomial(2*n -1 - r, n - 1)
 
 
+def min_height(n, h):
+    """
+    returns number of trees of size n of size >= h
+    """
+    total = 0
+    for k in range(1, ((n+1)/h) + 2):
+        total += binomial(2*n, n+1-k*h) - 2*binomial(2*n, n-k*h) + binomial(2*n, n-1-k*h)
+    return total
+
+
+
 def construct_plot(expectation_data, experimental_data, size, xlabel, use_log, truncate_left=False, truncate_right=False):
     if truncate_right:
         for i, item in enumerate(experimental_data[::-1]):
@@ -47,8 +58,12 @@ def construct_plot(expectation_data, experimental_data, size, xlabel, use_log, t
         expectation_data = [log(d, base=10) for d in expectation_data]
         experimental_data = [log(d, base=10) for d in experimental_data]
 
-    plot_expectation = list_plot(expectation_data, color='green', size=size, legend_label='expected values')
-    plot_experimental = list_plot(experimental_data, color='red', size=size, legend_label='experimental values')
+    # to start plotting at x=1
+    experimental_datapoints = zip(range(1, len(experimental_data)+1), experimental_data)
+    expectation_datapoints = zip(range(1, len(expectation_data)+1), expectation_data)
+
+    plot_expectation = list_plot(expectation_datapoints, color='green', size=size, legend_label='expected values')
+    plot_experimental = list_plot(experimental_datapoints, color='red', size=size, legend_label='experimental values')
 
     max_val = max(itertools.chain(expectation_data, experimental_data))
     min_val = 0
@@ -66,7 +81,7 @@ def make_plots(source_base_name, output_base_name, prefix, expectation_function,
         with open(source_name, 'r') as f:
             experimental_data = list(map(int, f.readlines()))
         r = args.num_samples / catalan_number(args.n)
-        expectation_data = [r * expectation_function(args.n, x) for x in range(len(experimental_data))]
+        expectation_data = [r * expectation_function(args.n, x) for x in range(1, len(experimental_data))]
         reg_plot = construct_plot(expectation_data, experimental_data, size, xlabel, use_log=False, truncate_left=truncate_left, truncate_right=truncate_right)
         log_plot = construct_plot(expectation_data, experimental_data, size, xlabel, use_log=True, truncate_left=truncate_left, truncate_right=truncate_right)
 
@@ -100,10 +115,15 @@ if __name__ == '__main__':
     source_base_name = 'n={}_dist={}_mixingTime={}_sampleInterval={}_numSamples={}.txt'.format(args.n, distribution, args.mixing_time, args.sample_interval, args.num_samples)
     plot_base_name = 'n={}_dist={}.png'.format(args.n, distribution)
 
+    min_heights = {h : min_height(args.n, h) for h in range(1, args.n+4)}
+    def height(n, h, min_heights=min_heights):
+        return min_heights[h] - min_heights[h+1]
+
+    make_plots(source_base_name, plot_base_name, 'height_', height, args, 5, 'height', truncate_right=True)
     make_plots(source_base_name, plot_base_name, 'cd_sums_', contacts, args, 5, 'contact distance')
     make_plots(source_base_name, plot_base_name, 'num_leaves_', leaves, args, 5, 'number of leaves', truncate_right=True, truncate_left=True)
     make_plots(source_base_name, plot_base_name, 'root_degree_', root_deg, args, 20, 'root degree', truncate_right=True)
-    
+
     # plt.ylabel('frequency')
     # plt.xlabel('contact distance')
     # plt.title('simulation with n={}'.format(n))
