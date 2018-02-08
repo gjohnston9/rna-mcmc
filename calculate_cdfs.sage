@@ -38,16 +38,16 @@ if __name__ == '__main__':
         """
         return min_heights[h] - min_heights[h+1]
 
-    for name, func in (
-        ('num_leaves', num_leaves), ### non-zero for 1:n
-        ('root_degree', root_deg), ### non-zero for 1:n
-        ('height', tree_height)): ### non-zero for 2:n+1
+    for name, func, end in (
+        ('num_leaves', num_leaves, n+1), ### non-zero for 1:n
+        ('root_degree', root_deg, n+1), ### non-zero for 1:n
+        ('height', tree_height, n+2)): ### non-zero for 2:n+1
 
         filename = '{}_n={}_cdf.txt'.format(name, n)
         filename = os.path.join(out_dir, filename)
         with open(filename, 'w') as f:
             f.write('0\n')
             total = 0
-            for k in range(1, n+2):
+            for k in range(1, end):
                 total += func(n, k) / Cn
                 f.write('{}\n'.format(total.n(digits=14)))
