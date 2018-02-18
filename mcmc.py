@@ -150,7 +150,7 @@ def height(word):
     return tree_height
 
 
-def my_project(start_word, mixing_time, sample_interval, num_samples, distribution):
+def my_project(start_word, mixing_time, sample_interval, num_samples, distribution, base_prefix):
     """
     start_word: word to start with
     mixing_time: t
@@ -179,38 +179,53 @@ def my_project(start_word, mixing_time, sample_interval, num_samples, distributi
     root_degree_frequency = np.zeros(n, dtype='uint32')
     height_frequency = np.zeros(n, dtype='uint32')
 
-    ### one entry is filled in each time a sample is collected
-    num_leaves_values = np.zeros(num_samples, dtype='uint32')
-    root_degree_values = np.zeros(num_samples, dtype='uint32')
-    height_values = np.zeros(num_samples, dtype='uint32')
+    num_leaves_values = []
+    root_degree_values = []
+    height_values = []
+
+    batch_size = 2000000
+
+    base_name = 'n={}_dist={}_mixingTime={}_sampleInterval={}_numSamples={}.txt'.format(
+        n, distribution, mixing_time, sample_interval, num_samples)
 
     while samp_count < num_samples:  # I need my program to stop after I have collected num_samples amount of samples
         if step_count == sample_interval: # after sample_interval amount of steps, append the curr_word to my list 'samples' (for loop)
-            # samples.append(list(curr_word))
             update_frequencies(curr_word, num_leaves_frequency, root_degree_frequency, height_frequency) ### calculate updated statistics for curr_word
-            update_samples(curr_word, samp_count, num_leaves_values, root_degree_values, height_values)
             cds = contact_distances(curr_word)
             cd_sums = map(add, cd_sums, cds)
+
+            update_samples(curr_word, samp_count, num_leaves_values, root_degree_values, height_values)
 
             step_count = 0
             samp_count += 1
             if samp_count % checkpoint == 0:
                 print('collected {} of {} samples'.format(samp_count, num_samples))
+            if samp_count % batch_size == 0:
+                print('saving batch {} of {}'.format(samp_count / batch_size, num_samples / batch_size))
+                for array, type_prefix in (
+                    (num_leaves_values, 'num_leaves_'),
+                    (root_degree_values, 'root_degree_'),
+                    (height_values, 'height_')):
+
+                    filename = os.path.join('data', 'by_sample', base_prefix + type_prefix + base_name)
+                    print('saving {} to {}'.format(type_prefix[:-1], filename))
+                    with open(filename, 'a') as f:
+                        for sample in array:
+                            f.write('{}\n'.format(sample))
+
+                num_leaves_values = []
+                root_degree_values = []
+                height_values = []
+
         else:
             combined_move(curr_word, distribution)
             step_count += 1
     return {
-        'frequencies' : {
-            'cd_sums' : cd_sums,
-            'num_leaves' : num_leaves_frequency,
-            'root_degree' : root_degree_frequency,
-            'height' : height_frequency
-        },
-        'samples' : {
-            'num_leaves' : num_leaves_values,
-            'root_degree' : root_degree_values,
-            'height' : height_values
-        }}
+        'cd_sums' : cd_sums,
+        'num_leaves' : num_leaves_frequency,
+        'root_degree' : root_degree_frequency,
+        'height' : height_frequency
+        }
 
 
 def update_frequencies(word, num_leaves_frequency, root_degree_frequency, height_frequency):
@@ -226,13 +241,13 @@ def update_frequencies(word, num_leaves_frequency, root_degree_frequency, height
 
 def update_samples(word, i, num_leaves_values, root_degree_values, height_values):
     leaves = num_leaves(word)
-    num_leaves_values[i] = leaves
+    num_leaves_values.append(leaves)
 
     degree = root_degree(word)
-    root_degree_values[i] = degree
+    root_degree_values.append(degree)
 
     tree_height = height(word)
-    height_values[i] = tree_height
+    height_values.append(tree_height)
 
 
 if __name__ == '__main__':
@@ -248,6 +263,8 @@ if __name__ == '__main__':
     distribution_selection_group.add_argument('--uniform', action='store_true', help='use a uniform distribution when choosing whether to make a move')
     distribution_selection_group.add_argument('--nntm', action='store_true', help='use the ratio of energies as predicted by the nearest-neighbor thermodynamic model when choosing whether to make a move')
 
+    parser.add_argument('--prefix', type=str, default='', help='prefix to add to the beginning of saved data')
+
     args = parser.parse_args()
 
     if args.uniform:
@@ -259,33 +276,24 @@ if __name__ == '__main__':
 
     start_word = [1] * args.n + [0] * args.n
 
-    results = my_project(start_word, args.mixing_time, args.sample_interval, args.num_samples, distribution)
-
-    ### np ndarrays
-    cd_sums = results['frequencies']['cd_sums']
-    cd_sums = np.asarray(list(cd_sums))
-    num_leaves_frequency = results['frequencies']['num_leaves']
-    root_degree_frequency = results['frequencies']['root_degree']
-    height_frequency = results['frequencies']['height']
-    num_leaves_values = results['samples']['num_leaves']
-    root_degree_values = results['samples']['root_degree']
-    height_values = results['samples']['height']
+    results = my_project(start_word, args.mixing_time, args.sample_interval, args.num_samples, distribution, args.prefix)
 
     end_time = time.time()
     print('Elapsed time was {:.0f} seconds.'.format(end_time - start_time))
-
-    base_name = 'n={}_dist={}_mixingTime={}_sampleInterval={}_numSamples={}.txt'.format(args.n, distribution, args.mixing_time, args.sample_interval, args.num_samples)
     
-    for array, directory, prefix in (
-        (cd_sums, 'by_frequency', 'cd_sums_'),
-        (num_leaves_frequency, 'by_frequency', 'num_leaves_'),
-        (root_degree_frequency, 'by_frequency', 'root_degree_'),
-        (height_frequency, 'by_frequency', 'height_'),
+    ### np ndarrays
+    cd_sums = results['cd_sums']
+    cd_sums = np.asarray(list(cd_sums))
+    num_leaves_frequency = results['num_leaves']
+    root_degree_frequency = results['root_degree']
+    height_frequency = results['height']
 
-        (num_leaves_values, 'by_sample', 'num_leaves_'),
-        (root_degree_values, 'by_sample', 'root_degree_'),
-        (height_values, 'by_sample', 'height_')):
+    for array, prefix in (
+        (cd_sums, 'cd_sums_'),
+        (num_leaves_frequency, 'num_leaves_'),
+        (root_degree_frequency, 'root_degree_'),
+        (height_frequency, 'height_'),
 
-        filename = os.path.join('data', directory, prefix + base_name)
+        filename = os.path.join('data', 'by_frequency', args.prefix + prefix + base_name)
         print('saving {} to {}'.format(prefix + directory, filename))
         np.savetxt(filename, array, fmt='%d')
