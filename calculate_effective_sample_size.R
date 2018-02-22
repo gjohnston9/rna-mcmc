@@ -1,36 +1,41 @@
 library(coda)
 
-stats = c("num_leaves", "height", "root_degree")
+stats = c("root_degree", "num_leaves", "height")
+# limits = c(1000, 10000, 100000, 500000, 1000000)
+limits = c(10000000)
+num_runs = 4
+
+n = 1000
+mixingTime = 0
+sampleInterval = 1
+numSamples = 10000000
+
+stopifnot(all(limits <= numSamples))
+
 for (stat in stats)
 {
-	n = 1000
-	mixingTime = 10000000
+	for (limit in limits)
+	{
+		print(sprintf("calculating effective sample size for %s with %d samples", stat, limit))
+		vals = c()
+		for (run in 1:num_runs)
+		{
+			filename = sprintf(
+				"data/by_sample/run%d_%s_n=%d_dist=uniform_mixingTime=%d_sampleInterval=%d_numSamples=%d.txt",
+				run,
+				stat,
+				n,
+				mixingTime,
+				sampleInterval,
+				numSamples)
 
-	### first run
-	# sampleInterval = 1
-	# numSamples = 1000000
+			my_data = scan(filename, nmax=limit)
+			my_ess = effectiveSize(my_data) 
+			vals = append(vals, my_ess)
+		}
 
-	### second run based on first effective sample size
-	# sampleInterval = 354
-	# numSamples = 2820
-
-	### let's try that again
-	# sampleInterval = 1000
-	# numSamples = 1000
-
-	### let's try that again, with more accurate numbers
-	sampleInterval = 1075
-	numSamples = 930
-
-	filename = sprintf(
-		"data/by_sample/%s_n=%d_dist=uniform_mixingTime=%d_sampleInterval=%d_numSamples=%d.txt",
-		stat,
-		n,
-		mixingTime,
-		sampleInterval,
-		numSamples)
-
-	t = read.table(filename)
-	colnames(t)[1] <- stat
-	print(effectiveSize(t))
+		to_write = sprintf("mean=%f\nstd_dev=%f\n", mean(vals), sd(vals))
+		cat(vals)
+		cat(to_write)
+	}
 }
