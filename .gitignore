@@ -5,7 +5,6 @@
 plots/
 prof/
 keep/
-*.txt
 
 # holds contact distances data
 data/
