@@ -62,12 +62,13 @@ def combined_move(curr_word, distribution):
 
     if distribution == 'nntm':
         new_energy = calculate_energy(curr_word) # calculates energy
-        probability = min(1, np.exp(-new_energy)/np.exp(-curr_energy)) # MCMC part
+        probability = min(1, np.exp(old_energy-new_energy)) # MCMC part
+        assert probability > 0
         ran = random.random()
         if ran <= probability: # leave new dyck_word as current state
             return
         else: # revert to old dyck_word
-            curr_word[pos1], curr_word[pos0] = curr_word[pos0], curr_word[pos1] # swap back
+            swap(curr_word, posA, posB) # curr_arcs is now new_word
 
 
 # energy function rewritten by Anna to be faster and avoid recursion depth issues
