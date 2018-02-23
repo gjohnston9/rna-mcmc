@@ -150,7 +150,7 @@ def height(word):
     return tree_height
 
 
-def my_project(start_word, mixing_time, sample_interval, num_samples, distribution, base_prefix):
+def my_project(start_word, mixing_time, sample_interval, num_samples, distribution, base_prefix, base_name):
     """
     start_word: word to start with
     mixing_time: t
@@ -183,10 +183,8 @@ def my_project(start_word, mixing_time, sample_interval, num_samples, distributi
     root_degree_values = []
     height_values = []
 
-    batch_size = 2000000
-
-    base_name = 'n={}_dist={}_mixingTime={}_sampleInterval={}_numSamples={}.txt'.format(
-        n, distribution, mixing_time, sample_interval, num_samples)
+    batch_size = min(int(1e6), int(num_samples / 10))
+    assert num_samples % batch_size == 0 ### don't want to discard any samples
 
     while samp_count < num_samples:  # I need my program to stop after I have collected num_samples amount of samples
         if step_count == sample_interval: # after sample_interval amount of steps, append the curr_word to my list 'samples' (for loop)
@@ -255,15 +253,23 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('n', type=int, help='value of n to use')
-    parser.add_argument('mixing_time', type=int)
-    parser.add_argument('sample_interval', type=int)
-    parser.add_argument('num_samples', type=int)
+    parser.add_argument('mixing_time', type=int,
+        help='initial mixing time before recording info about perfect matching characteristics')
+    parser.add_argument('sample_interval', type=int,
+        help='number of moves to make in between recording info about characteristics')
+    parser.add_argument('num_samples', type=int, help='number of samples to collect')
 
     distribution_selection_group = parser.add_mutually_exclusive_group(required=True)
-    distribution_selection_group.add_argument('--uniform', action='store_true', help='use a uniform distribution when choosing whether to make a move')
-    distribution_selection_group.add_argument('--nntm', action='store_true', help='use the ratio of energies as predicted by the nearest-neighbor thermodynamic model when choosing whether to make a move')
+    distribution_selection_group.add_argument('--uniform', action='store_true',
+        help='use a uniform distribution when choosing whether to make a move')
+    distribution_selection_group.add_argument('--nntm', action='store_true',
+        help='use the ratio of energies as predicted by the nearest-neighbor thermodynamic model ' \
+        + 'when choosing whether to make a move')
 
-    parser.add_argument('--prefix', type=str, default='', help='prefix to add to the beginning of saved data')
+    parser.add_argument('--prefix', type=str, default='', help='prefix to add to the beginning of ' \
+        + 'saved data (useful when repeatedly calling this simulation in a script, so as not to overwrite previous results)')
+    parser.add_argument('--start_word_source', type=str, default=None, help='path to file containing ' \
+        + 'the starting word to be used (the default start word is [1]*n + [0]*n)')
 
     args = parser.parse_args()
 
@@ -272,12 +278,17 @@ if __name__ == '__main__':
     else:
         distribution = 'nntm'
 
+    if args.start_word_source is not None:
+        with open(args.start_word_source, 'r') as f:
+            start_word = list(map(int, f.readline().strip()))
+    else:
+        start_word = [1] * args.n + [0] * args.n
+
+    base_name = 'n={}_dist={}_mixingTime={}_sampleInterval={}_numSamples={}.txt'.format(
+        args.n, distribution, args.mixing_time, args.sample_interval, args.num_samples)
+
     start_time = time.time()
-
-    start_word = [1] * args.n + [0] * args.n
-
-    results = my_project(start_word, args.mixing_time, args.sample_interval, args.num_samples, distribution, args.prefix)
-
+    results = my_project(start_word, args.mixing_time, args.sample_interval, args.num_samples, distribution, args.prefix, base_name)
     end_time = time.time()
     print('Elapsed time was {:.0f} seconds.'.format(end_time - start_time))
     
@@ -292,8 +303,9 @@ if __name__ == '__main__':
         (cd_sums, 'cd_sums_'),
         (num_leaves_frequency, 'num_leaves_'),
         (root_degree_frequency, 'root_degree_'),
-        (height_frequency, 'height_'),
+        (height_frequency, 'height_')):
 
-        filename = os.path.join('data', 'by_frequency', args.prefix + prefix + base_name)
-        print('saving {} to {}'.format(prefix + directory, filename))
+        filename = args.prefix + prefix + base_name
+        filepath = os.path.join('data', 'by_frequency', filename)
+        print('saving {} to data/by_frequency/'.format(filepath))
         np.savetxt(filename, array, fmt='%d')
