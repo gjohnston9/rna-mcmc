@@ -1,0 +1,18 @@
+[1] "calculating effective sample size for root_degree with 1000 samples"
+mean=3.296560
+std_dev=4.409863
+[1] "calculating effective sample size for root_degree with 10000 samples"
+mean=14.791952
+std_dev=28.435573
+[1] "calculating effective sample size for root_degree with 100000 samples"
+mean=63.718799
+std_dev=44.673197
+[1] "calculating effective sample size for root_degree with 500000 samples"
+mean=271.528979
+std_dev=175.506847
+[1] "calculating effective sample size for root_degree with 1000000 samples"
+mean=465.575123
+std_dev=294.942485
+[1] "calculating effective sample size for root_degree with 10000000 samples"
+mean=4211.826388
+std_dev=2641.560936
