@@ -1,0 +1,52 @@
+\documentclass{article}
+
+\usepackage{fullpage}
+
+\begin{document}
+
+{\LARGE root degree}	\\
+\\
+\begin{tabular}{| l | c | c |c | c | c |}
+	\hline
+	\# iterations&1,000&10,000&100,000&500,000&1,000,000 \\ \hline
+	\# iterations / mean effective sample size&333&666&1563&1838&2146\\
+	shrink factor estimate&21&18&1.06&1.03&1.01\\
+	shrink factor upper confidence limit&131&105&1.17&1.07&1.03\\
+	mean of effective sample size&3&15&64&272&466\\
+	standard deviation of effective sample size&4&28&45&176&295\\
+	\hline
+\end{tabular}
+\\
+\\
+\\
+
+{\LARGE number of leaves} \\
+\\
+\begin{tabular}{| l | c | c |c | c | c |}	
+	\hline
+	\# iterations&1,000&10,000&100,000&500,000&1,000,000 \\ \hline
+	\# iterations / mean effective sample size&500&2500&3125&3546&3759\\
+	shrink factor estimate&19.2&31.8&1.14&1.04&1.01\\
+	shrink factor upper confidence limit&59.5&70.6&1.38&1.1&1.04\\
+	mean of effective sample size&2&4&32&141&266\\
+	standard deviation of effective sample size&0&3&30&123&211\\
+	\hline
+\end{tabular}
+\\
+\\
+\\
+
+{\LARGE height}	\\
+\\
+\begin{tabular}{| l | c | c |c | c | c |}
+	\hline
+	\# iterations&1,000&10,000&100,000&500,000&1,000,000 \\ \hline
+	\# iterations / mean effective sample size&500&2500&10000&12500&12658\\
+	shrink factor estimate&67.3&19.3&1.2&1.03&1.02\\
+	shrink factor upper confidence limit&319&56.9&1.52&1.07&1.04\\
+	mean of effective sample size&2&4&10&40&79\\
+	standard deviation of effective sample size&1&3&9&17&20\\
+	\hline
+\end{tabular}
+
+\end{document}
