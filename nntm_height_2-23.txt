@@ -1,18 +1,24 @@
-[1] "calculating effective sample size for height with 1000 samples"
-mean=2.439508
-std_dev=1.011334
-[1] "calculating effective sample size for height with 10000 samples"
-mean=4.102991
-std_dev=3.025800
-[1] "calculating effective sample size for height with 100000 samples"
-mean=9.572258
-std_dev=8.522383
-[1] "calculating effective sample size for height with 500000 samples"
-mean=39.699152
-std_dev=17.341035
-[1] "calculating effective sample size for height with 1000000 samples"
-mean=78.924399
-std_dev=19.966713
-[1] "calculating effective sample size for height with 10000000 samples"
-mean=1013.877882
-std_dev=58.294888
+
+calculating effective sample size for height with 1000 samples
+mean=2
+std_dev=1
+
+calculating effective sample size for height with 10000 samples
+mean=4
+std_dev=3
+
+calculating effective sample size for height with 100000 samples
+mean=10
+std_dev=9
+
+calculating effective sample size for height with 500000 samples
+mean=40
+std_dev=17
+
+calculating effective sample size for height with 1000000 samples
+mean=79
+std_dev=20
+
+calculating effective sample size for height with 10000000 samples
+mean=1014
+std_dev=58
