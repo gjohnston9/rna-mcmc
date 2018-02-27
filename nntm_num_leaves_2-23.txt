@@ -1,18 +1,24 @@
-[1] "calculating effective sample size for num_leaves with 1000 samples"
-mean=2.414182
-std_dev=0.477295
-[1] "calculating effective sample size for num_leaves with 10000 samples"
-mean=4.406869
-std_dev=3.247117
-[1] "calculating effective sample size for num_leaves with 100000 samples"
-mean=32.190581
-std_dev=29.828193
-[1] "calculating effective sample size for num_leaves with 500000 samples"
-mean=141.455225
-std_dev=122.994954
-[1] "calculating effective sample size for num_leaves with 1000000 samples"
-mean=266.324806
-std_dev=211.212439
-[1] "calculating effective sample size for num_leaves with 10000000 samples"
-mean=2022.801806
-std_dev=1048.592460
+
+calculating effective sample size for num_leaves with 1000 samples
+mean=2
+std_dev=0
+
+calculating effective sample size for num_leaves with 10000 samples
+mean=4
+std_dev=3
+
+calculating effective sample size for num_leaves with 100000 samples
+mean=32
+std_dev=30
+
+calculating effective sample size for num_leaves with 500000 samples
+mean=141
+std_dev=123
+
+calculating effective sample size for num_leaves with 1000000 samples
+mean=266
+std_dev=211
+
+calculating effective sample size for num_leaves with 10000000 samples
+mean=2023
+std_dev=1049
