@@ -36,8 +36,10 @@ for (stat in stats) {
 		sampleSize = sampleSizes[i, stat]
 
 		print(sprintf("calculating KS for %s with n=%d, using %d samples", stat, n, limit))
-		statistic_vals = c()
-		p_vals = c()
+		ks_statistic_vals = c()
+		ks_p_vals = c()
+		cvm_statistic_vals = c()
+		cvm_p_vals = c()
 		for (run in 1:num_runs) {
 			actual_values_filename = sprintf(
 				"data/by_sample/run%d_%s_n=%d_dist=uniform_mixingTime=%d_sampleInterval=%d_numSamples=%d.txt",
@@ -54,21 +56,29 @@ for (stat in stats) {
 			# cat(sprintf("length:%d\n", length(actual_values)))
 			actual_values = actual_values[seq(1, length(actual_values), interval)]
 			# cat(sprintf("sampleSize:%d\nnew length:%d\n", sampleSize, length(actual_values)))
-			results = dgof::ks.test(actual_values, f)
+			ks_results = dgof::ks.test(actual_values, f)
+			cvm_results = dgof::cvm.test(actual_values, f)
 
 			# print(results)
 			# browser()
 
-			statistic_vals = append(statistic_vals, results["statistic"][[1]][[1]])
-			p_value = results["p.value"][[1]][[1]]
-			# print(p_value)
-			p_vals = append(p_vals, p_value)
+			ks_statistic_vals = append(ks_statistic_vals, ks_results["statistic"][[1]][[1]])
+			cvm_statistic_vals = append(cvm_statistic_vals, cvm_results["statistic"][[1]][[1]])
+			ks_p_value = ks_results["p.value"][[1]][[1]]
+			cvm_p_value = cvm_results["p.value"][[1]][[1]]
+			ks_p_vals = append(ks_p_vals, ks_p_value)
+			cvm_p_vals = append(cvm_p_vals, cvm_p_value)
 		}
 
 		cat(sprintf(
-		 	"statistic:\n%f\n\np-value:\n%f\n\n",
-		 	mean(statistic_vals),
-		 	mean(p_vals)))
+		 	"KS statistic:\n%f\n\nKS p-value:\n%f\n\n",
+		 	mean(ks_statistic_vals),
+		 	mean(ks_p_vals)))
+
+		cat(sprintf(
+		 	"CVM statistic:\n%f\n\nCVM p-value:\n%f\n\n",
+		 	mean(cvm_statistic_vals),
+		 	mean(cvm_p_vals)))
 
 		# cat(sprintf(
 		# 	"p-value:\n%f\n",
