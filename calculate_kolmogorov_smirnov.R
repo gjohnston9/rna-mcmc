@@ -1,6 +1,7 @@
 library(dgof)
 
-stats = c("root_degree", "num_leaves", "height")
+# stats = c("root_degree", "num_leaves", "height")
+stats = c("root_degree")
 limits = c(1000, 10000, 100000, 500000, 1000000)
 
 root_degree = c(31, 47, 431, 1886, 3624)
@@ -64,17 +65,17 @@ for (stat in stats) {
 			p_vals = append(p_vals, p_value)
 		}
 
-		# cat(sprintf(
-		# 	"statistic:\n%f\n\np-value:\n%f\n\n",
-		# 	mean(statistic_vals),
-		# 	mean(p_vals)))
+		cat(sprintf(
+		 	"statistic:\n%f\n\np-value:\n%f\n\n",
+		 	mean(statistic_vals),
+		 	mean(p_vals)))
 
 		# cat(sprintf(
 		# 	"p-value:\n%f\n",
 		# 	mean(p_vals)))
 
-		cat(sprintf(
-			"statistic:\n\t%.3f\n",
-			mean(statistic_vals)))
+		# cat(sprintf(
+		#	"statistic:\n\t%.3f\n",
+		#	mean(statistic_vals)))
 	}
 }

@@ -1,14 +1,14 @@
 library(coda)
 
 stats = c("root_degree", "num_leaves", "height")
-limits = c(1000, 10000, 100000, 500000, 1000000)
-plot_at = 10000
-transform = FALSE
+limits = c(1000, 10000, 100000, 500000, 1000000, 10000000)
+plot_at = -1
+transform = TRUE
 
 n = 1000
 mixingTime = 0
 sampleInterval = 1
-numSamples = 1000000
+numSamples = 10000000
 
 num_runs = 4
 
@@ -16,7 +16,7 @@ pdf('gelman.pdf')
 
 for (limit in limits) {
 	for (stat in stats) {
-		print(sprintf(
+		cat(sprintf(
 			"calculating gelman convergence for %s with n=%d, using %d samples",
 			stat,
 			n,
@@ -25,7 +25,7 @@ for (limit in limits) {
 		chains = vector("list", num_runs)
 		for (run in 1:num_runs) {
 			actual_values_filename = sprintf(
-				"data/by_sample/run%d_%s_n=%d_dist=uniform_mixingTime=%d_sampleInterval=%d_numSamples=%d.txt",
+				"data/by_sample/run%d_%s_n=%d_dist=nntm_mixingTime=%d_sampleInterval=%d_numSamples=%d.txt",
 				run,
 				stat,
 				n,
