@@ -170,6 +170,8 @@ def my_project(start_word, mixing_time, sample_interval, num_samples, distributi
     curr_word = start_word
     # curr_energy = get_arcs_init_energy(len(start_word)/2)
     for i in range(mixing_time):  # I need my movingWithProb to run mixing_time amount of times (while loop)
+        if i > 0 and i % (mixing_time / 10) == 0:
+            print('finished {} of {} mixing steps'.format(i, mixing_time))
         combined_move(curr_word, distribution)
     samp_count = 0
     step_count = 0
@@ -309,4 +311,4 @@ if __name__ == '__main__':
         filename = args.prefix + prefix + base_name
         filepath = os.path.join('data', 'by_frequency', filename)
         print('saving {} to data/by_frequency/'.format(filepath))
-        np.savetxt(filename, array, fmt='%d')
+        np.savetxt(filepath, array, fmt='%d')
