@@ -76,8 +76,8 @@ def construct_plot(expectation_data, experimental_data, size, xlabel, use_log, t
     return my_plot
 
 
-def make_plots(source_base_name, output_base_name, prefix, expectation_function, args, size, xlabel, truncate_left=False, truncate_right=False):
-        source_name = os.path.join('data', 'by_frequency', prefix + source_base_name)
+def make_plots(base_name, stat_prefix, expectation_function, args, size, xlabel, truncate_left=False, truncate_right=False):
+        source_name = os.path.join('data', 'by_frequency', stat_prefix + base_name)
         with open(source_name, 'r') as f:
             experimental_data = list(map(int, f.readlines()))
         r = args.num_samples / catalan_number(args.n)
@@ -85,10 +85,10 @@ def make_plots(source_base_name, output_base_name, prefix, expectation_function,
         reg_plot = construct_plot(expectation_data, experimental_data, size, xlabel, use_log=False, truncate_left=truncate_left, truncate_right=truncate_right)
         log_plot = construct_plot(expectation_data, experimental_data, size, xlabel, use_log=True, truncate_left=truncate_left, truncate_right=truncate_right)
 
-        for (my_plot, plot_prefix) in ((reg_plot, ''), (log_plot, 'log_')):
-            plot_name = prefix + plot_prefix + output_base_name
+        for (my_plot, log_prefix) in ((reg_plot, ''), (log_plot, 'log_')):
+            plot_name = stat_prefix + log_prefix + base_name[:-4] + '.png'
             plot_path = os.path.join('plots', plot_name)
-            print('saving {} to: {}'.format(prefix[:-1], plot_path))
+            print('saving {} to: {}'.format(stat_prefix[:-1], plot_path))
             my_plot.save(plot_path)
 
 
@@ -112,17 +112,16 @@ if __name__ == '__main__':
         distribution = 'nntm'
 
 
-    source_base_name = 'n={}_dist={}_mixingTime={}_sampleInterval={}_numSamples={}.txt'.format(args.n, distribution, args.mixing_time, args.sample_interval, args.num_samples)
-    plot_base_name = 'n={}_dist={}.png'.format(args.n, distribution)
+    base_name = 'n={}_dist={}_mixingTime={}_sampleInterval={}_numSamples={}.txt'.format(args.n, distribution, args.mixing_time, args.sample_interval, args.num_samples)
 
     min_heights = {h : min_height(args.n, h) for h in range(1, args.n+4)}
     def height(n, h, min_heights=min_heights):
         return min_heights[h] - min_heights[h+1]
 
-    make_plots(source_base_name, plot_base_name, 'height_', height, args, 5, 'height', truncate_right=True)
-    make_plots(source_base_name, plot_base_name, 'cd_sums_', contacts, args, 5, 'contact distance')
-    make_plots(source_base_name, plot_base_name, 'num_leaves_', leaves, args, 5, 'number of leaves', truncate_right=True, truncate_left=True)
-    make_plots(source_base_name, plot_base_name, 'root_degree_', root_deg, args, 20, 'root degree', truncate_right=True)
+    make_plots(base_name, 'height_', height, args, 5, 'height', truncate_right=True)
+    make_plots(base_name, 'cd_sums_', contacts, args, 5, 'contact distance')
+    make_plots(base_name, 'num_leaves_', leaves, args, 5, 'number of leaves', truncate_right=True, truncate_left=True)
+    make_plots(base_name, 'root_degree_', root_deg, args, 20, 'root degree', truncate_right=True)
 
     # plt.ylabel('frequency')
     # plt.xlabel('contact distance')
