@@ -29,10 +29,14 @@ def min_height(n, h):
 
 
 
-def construct_plot(expectation_data, experimental_data, size, xlabel, use_log, truncate_left=False, truncate_right=False):
+def construct_plot(expectation_data, experimental_data, size, xlabel, use_log, dist, truncate_left=False, truncate_right=False):
+    assert dist in ('nntm, uniform')
+    expectation_data = list(enumerate(expectation_data, 1))
+    experimental_data = list(enumerate(experimental_data, 1))
+
     if truncate_right:
-        for i, item in enumerate(experimental_data[::-1]):
-            if item != 0:
+        for i, ((x1, y1), (x2, y2)) in enumerate(zip(experimental_data[::-1], expectation_data[::-1])):
+            if y1 >= 1 or y2 >= 1:
                 right_lim = len(experimental_data) - i
                 break
         else:
@@ -43,53 +47,68 @@ def construct_plot(expectation_data, experimental_data, size, xlabel, use_log, t
         experimental_data = experimental_data[:right_lim]
 
     if truncate_left:
-        for i, item in enumerate(experimental_data):
-            if item != 0:
+        for i, ((x1, y1), (x2, y2)) in enumerate(zip(experimental_data, expectation_data)):
+            if y1 >= 1 or y2 >= 1:
                 left_lim = i
                 break
         else:
             raise ValueError('no non-zero elements found')
 
-        left_lim -= 5
+        left_lim = max(0, left_lim - 5)
         expectation_data = expectation_data[left_lim:]
         experimental_data = experimental_data[left_lim:]
 
     if use_log:
-        expectation_data = [log(d, base=10) for d in expectation_data]
-        experimental_data = [log(d, base=10) for d in experimental_data]
+        expectation_data = [(x, log(y, base=10)) for (x, y) in expectation_data]
+        experimental_data = [(x, log(y, base=10)) for (x, y) in experimental_data]
 
-    # to start plotting at x=1
-    experimental_datapoints = zip(range(1, len(experimental_data)+1), experimental_data)
-    expectation_datapoints = zip(range(1, len(expectation_data)+1), expectation_data)
+    expected_label = 'expected values' if dist == 'uniform' else 'uniform distribution'
+    experimental_label = 'experimental values' if dist == 'uniform' else 'thermodynamic distribution'
+    plot_expectation = list_plot(expectation_data, color='green', size=size, legend_label=expected_label)
+    plot_experimental = list_plot(experimental_data, color='red', size=size, legend_label=experimental_label)
 
-    plot_expectation = list_plot(expectation_datapoints, color='green', size=size, legend_label='expected values')
-    plot_experimental = list_plot(experimental_datapoints, color='red', size=size, legend_label='experimental values')
-
-    max_val = max(itertools.chain(expectation_data, experimental_data))
-    min_val = 0
+    max_y = max(itertools.chain(expectation_data, experimental_data), key=lambda xy: xy[1])[1]
+    min_y = 0
 
     my_plot = plot_expectation + plot_experimental
-    my_plot.set_axes_range(ymin=min_val, ymax=max_val)
-    my_plot.axes_labels([xlabel, 'frequency'])
+    my_plot.set_axes_range(ymin=min_y, ymax=max_y)
+    my_plot.axes_labels([xlabel, 'log of frequency' if use_log else 'frequency'])
     my_plot.set_legend_options(markerscale=8.0/size)
 
     return my_plot
 
 
-def make_plots(base_name, stat_prefix, expectation_function, args, size, xlabel, truncate_left=False, truncate_right=False):
+def make_plots(base_name, stat_prefix, expectation_function, args, size, xlabel, dist, truncate_left=False, truncate_right=False):
         source_name = os.path.join('data', 'by_frequency', stat_prefix + base_name)
         with open(source_name, 'r') as f:
             experimental_data = list(map(int, f.readlines()))
         r = args.num_samples / catalan_number(args.n)
         expectation_data = [r * expectation_function(args.n, x) for x in range(1, len(experimental_data))]
-        reg_plot = construct_plot(expectation_data, experimental_data, size, xlabel, use_log=False, truncate_left=truncate_left, truncate_right=truncate_right)
-        log_plot = construct_plot(expectation_data, experimental_data, size, xlabel, use_log=True, truncate_left=truncate_left, truncate_right=truncate_right)
+        if stat_prefix == 'num_leaves_dsadad':
+            new_truncate_left = False
+            new_truncate_right = False
+        else:
+            new_truncate_right = truncate_right
+            new_truncate_left = truncate_left
+        reg_plot = construct_plot(expectation_data, experimental_data, size, xlabel, use_log=False, dist=dist, truncate_left=truncate_left, truncate_right=truncate_right)
+        log_plot = construct_plot(expectation_data, experimental_data, size, xlabel, use_log=True, dist=dist, truncate_left=new_truncate_left, truncate_right=new_truncate_right)
 
+        char_display_name = {
+            'cd_sums_' : 'contact distance sums',
+            'num_leaves_' : 'number of leaves',
+            'root_degree_' : 'root degree',
+            'height_' : 'height,'
+        }
         for (my_plot, log_prefix) in ((reg_plot, ''), (log_plot, 'log_')):
             plot_name = stat_prefix + log_prefix + base_name[:-4] + '.png'
             plot_path = os.path.join('plots', plot_name)
             print('saving {} to: {}'.format(stat_prefix[:-1], plot_path))
-            my_plot.save(plot_path)
+            dist_to_use = 'uniform' if dist == 'uniform' else 'thermodynamic'
+            plot_title = 'frequencies of {} under {} distribution\nvs. expected frequencies under uniform distribution'.format(
+                char_display_name[stat_prefix], dist_to_use)
+            params = 'with n={:,}, initial mixing time of {:,}, sample\ninterval of {:,} and number of samples of {:,}'.format(
+                args.n, args.mixing_time, args.sample_interval, args.num_samples)
+            my_plot.save(plot_path, title='\n '.join([plot_title, params]) + '\n\n')
 
 
 if __name__ == '__main__':
@@ -118,10 +137,10 @@ if __name__ == '__main__':
     def height(n, h, min_heights=min_heights):
         return min_heights[h] - min_heights[h+1]
 
-    make_plots(base_name, 'height_', height, args, 5, 'height', truncate_right=True)
-    make_plots(base_name, 'cd_sums_', contacts, args, 5, 'contact distance')
-    make_plots(base_name, 'num_leaves_', leaves, args, 5, 'number of leaves', truncate_right=True, truncate_left=True)
-    make_plots(base_name, 'root_degree_', root_deg, args, 20, 'root degree', truncate_right=True)
+    make_plots(base_name, 'height_', height, args, 5, 'height', distribution, truncate_right=True)
+    make_plots(base_name, 'cd_sums_', contacts, args, 5, 'contact distance', distribution)
+    make_plots(base_name, 'num_leaves_', leaves, args, 5, 'number of leaves', distribution, truncate_right=True, truncate_left=True)
+    make_plots(base_name, 'root_degree_', root_deg, args, 20, 'root degree', distribution, truncate_right=True)
 
     # plt.ylabel('frequency')
     # plt.xlabel('contact distance')
