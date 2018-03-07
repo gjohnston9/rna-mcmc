@@ -3,32 +3,6 @@ import itertools
 import os
 import pdb
 
-
-def contacts(n,d): # cd for uniform distribution
-    if d % 2 == 1:
-        return 0
-    return 1.0 / (d/2 +1) * binomial(d, d/2) * binomial(2*n - d -1, n - d/2 -1)
-
-
-def leaves(n, k):
-    return (1.0 / n) * binomial(n, k) * binomial(n, k-1)
-
-
-def root_deg(n, r):
-    return (r / (n * 1.0)) * binomial(2*n -1 - r, n - 1)
-
-
-def min_height(n, h):
-    """
-    returns number of trees of size n of size >= h
-    """
-    total = 0
-    for k in range(1, ((n+1)/h) + 2):
-        total += binomial(2*n, n+1-k*h) - 2*binomial(2*n, n-k*h) + binomial(2*n, n-1-k*h)
-    return total
-
-
-
 def construct_plot(expectation_data, experimental_data, size, xlabel, use_log, dist, truncate_left=False, truncate_right=False):
     assert dist in ('nntm, uniform')
     expectation_data = list(enumerate(expectation_data, 1))
@@ -78,37 +52,35 @@ def construct_plot(expectation_data, experimental_data, size, xlabel, use_log, d
     return my_plot
 
 
-def make_plots(base_name, stat_prefix, expectation_function, args, size, xlabel, dist, truncate_left=False, truncate_right=False):
-        source_name = os.path.join('data', 'by_frequency', stat_prefix + base_name)
-        with open(source_name, 'r') as f:
-            experimental_data = list(map(int, f.readlines()))
-        r = args.num_samples / catalan_number(args.n)
-        expectation_data = [r * expectation_function(args.n, x) for x in range(1, len(experimental_data))]
-        if stat_prefix == 'num_leaves_dsadad':
-            new_truncate_left = False
-            new_truncate_right = False
-        else:
-            new_truncate_right = truncate_right
-            new_truncate_left = truncate_left
-        reg_plot = construct_plot(expectation_data, experimental_data, size, xlabel, use_log=False, dist=dist, truncate_left=truncate_left, truncate_right=truncate_right)
-        log_plot = construct_plot(expectation_data, experimental_data, size, xlabel, use_log=True, dist=dist, truncate_left=new_truncate_left, truncate_right=new_truncate_right)
+def make_plots(base_name, stat_prefix, args, size, xlabel, dist, truncate_left=False, truncate_right=False):
+    source_name = os.path.join('data', 'processed_plot_data', 'plotData_' + stat_prefix + base_name)
+    with open(source_name, 'r') as f:
+        f.readline() # header
+        experimental_data, expectation_data = zip(*(map(float, line.split()) for line in f))
+    print('experimental data:\n{}\nexpectation:\n{}\n'.format(experimental_data[:10], expectation_data[:10]))
+    
+    experimental_data = list(experimental_data)
+    expectation_data = list(expectation_data)
 
-        char_display_name = {
-            'cd_sums_' : 'contact distance sums',
-            'num_leaves_' : 'number of leaves',
-            'root_degree_' : 'root degree',
-            'height_' : 'height,'
-        }
-        for (my_plot, log_prefix) in ((reg_plot, ''), (log_plot, 'log_')):
-            plot_name = stat_prefix + log_prefix + base_name[:-4] + '.png'
-            plot_path = os.path.join('plots', plot_name)
-            print('saving {} to: {}'.format(stat_prefix[:-1], plot_path))
-            dist_to_use = 'uniform' if dist == 'uniform' else 'thermodynamic'
-            plot_title = 'frequencies of {} under {} distribution\nvs. expected frequencies under uniform distribution'.format(
-                char_display_name[stat_prefix], dist_to_use)
-            params = 'with n={:,}, initial mixing time of {:,}, sample\ninterval of {:,} and number of samples of {:,}'.format(
-                args.n, args.mixing_time, args.sample_interval, args.num_samples)
-            my_plot.save(plot_path, title='\n '.join([plot_title, params]) + '\n\n')
+    reg_plot = construct_plot(expectation_data, experimental_data, size, xlabel, use_log=False, dist=dist, truncate_left=truncate_left, truncate_right=truncate_right)
+    log_plot = construct_plot(expectation_data, experimental_data, size, xlabel, use_log=True, dist=dist, truncate_left=truncate_left, truncate_right=truncate_right)
+
+    char_display_name = {
+        'cd_sums_' : 'contact distance sums',
+        'num_leaves_' : 'number of leaves',
+        'root_degree_' : 'root degree',
+        'height_' : 'height,'
+    }
+    for (my_plot, log_prefix) in ((reg_plot, ''), (log_plot, 'log_')):
+        plot_name = stat_prefix + log_prefix + base_name[:-4] + '.png'
+        plot_path = os.path.join('plots', plot_name)
+        print('saving {} to: {}'.format(stat_prefix[:-1], plot_path))
+        dist_to_use = 'uniform' if dist == 'uniform' else 'thermodynamic'
+        plot_title = 'frequencies of {} under {} distribution\nvs. expected frequencies under uniform distribution'.format(
+            char_display_name[stat_prefix], dist_to_use)
+        params = 'with n={:,}, initial mixing time of {:,}, sample\ninterval of {:,} and number of samples of {:,}'.format(
+            args.n, args.mixing_time, args.sample_interval, args.num_samples)
+        my_plot.save(plot_path, title='\n '.join([plot_title, params]) + '\n\n')
 
 
 if __name__ == '__main__':
@@ -130,23 +102,9 @@ if __name__ == '__main__':
     else:
         distribution = 'nntm'
 
-
     base_name = 'n={}_dist={}_mixingTime={}_sampleInterval={}_numSamples={}.txt'.format(args.n, distribution, args.mixing_time, args.sample_interval, args.num_samples)
 
-    min_heights = {h : min_height(args.n, h) for h in range(1, args.n+4)}
-    def height(n, h, min_heights=min_heights):
-        return min_heights[h] - min_heights[h+1]
-
-    make_plots(base_name, 'height_', height, args, 5, 'height', distribution, truncate_right=True)
-    make_plots(base_name, 'cd_sums_', contacts, args, 5, 'contact distance', distribution)
-    make_plots(base_name, 'num_leaves_', leaves, args, 5, 'number of leaves', distribution, truncate_right=True, truncate_left=True)
-    make_plots(base_name, 'root_degree_', root_deg, args, 20, 'root degree', distribution, truncate_right=True)
-
-    # plt.ylabel('frequency')
-    # plt.xlabel('contact distance')
-    # plt.title('simulation with n={}'.format(n))
-
-    # out_file = open('MCMC_thermo_1000n_50000ini_2000int.txt', 'w')
-    # for s in outPutSamples:
-    #     out_file.write(str(s)+'\n')       
-    # out_file.close()
+    make_plots(base_name, 'height_', args, 5, 'height', distribution, truncate_right=True)
+    make_plots(base_name, 'cd_sums_', args, 5, 'contact distance', distribution)
+    make_plots(base_name, 'num_leaves_', args, 5, 'number of leaves', distribution, truncate_right=True, truncate_left=True)
+    make_plots(base_name, 'root_degree_', args, 20, 'root degree', distribution, truncate_right=True)
