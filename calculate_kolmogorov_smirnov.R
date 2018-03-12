@@ -53,14 +53,9 @@ for (stat in stats) {
 			actual_values = scan(actual_values_filename, nmax=limit, quiet=TRUE)
 			interval = round(limit / sampleSize)
 			### get every kth element, ending up with $sampleSize samples
-			# cat(sprintf("length:%d\n", length(actual_values)))
 			actual_values = actual_values[seq(1, length(actual_values), interval)]
-			# cat(sprintf("sampleSize:%d\nnew length:%d\n", sampleSize, length(actual_values)))
 			ks_results = dgof::ks.test(actual_values, f)
 			cvm_results = dgof::cvm.test(actual_values, f)
-
-			# print(results)
-			# browser()
 
 			ks_statistic_vals = append(ks_statistic_vals, ks_results["statistic"][[1]][[1]])
 			cvm_statistic_vals = append(cvm_statistic_vals, cvm_results["statistic"][[1]][[1]])
@@ -79,13 +74,7 @@ for (stat in stats) {
 		 	"CVM statistic:\n%f\n\nCVM p-value:\n%f\n\n",
 		 	mean(cvm_statistic_vals),
 		 	mean(cvm_p_vals)))
-
-		# cat(sprintf(
-		# 	"p-value:\n%f\n",
-		# 	mean(p_vals)))
-
-		# cat(sprintf(
-		#	"statistic:\n\t%.3f\n",
-		#	mean(statistic_vals)))
 	}
 }
+
+warnings()
