@@ -46,6 +46,24 @@ def write_plot_data(base_name, stat_prefix, expectation_function, args):
             f.write('{}{}{}\n'.format(experimental, sep, expected.n()))
 
 
+def write_plot_data_experimental(nntm_base_name, stat_prefix):
+    nntm_source_name = os.path.join('data', 'by_frequency', stat_prefix + nntm_base_name)
+    uniform_source_name = nntm_source_name.replace('nntm', 'uniform')
+    with open(nntm_source_name, 'r') as f:
+        nntm_experimental_data = list(map(int, f.readlines()))
+    with open(uniform_source_name, 'r') as f:
+        uniform_experimental_data = list(map(int, f.readlines()))
+    assert len(nntm_experimental_data) == len(uniform_experimental_data)
+
+    output_path = os.path.join('data', 'processed_plot_data', 'plotData_' + stat_prefix + nntm_base_name)
+    print('saving {} to: {}'.format(stat_prefix[:-1], output_path))
+    sep = '\t'
+    with open(output_path, 'w') as f:
+        f.write('experimental frequency under nntm distribution{}experimental frequency under uniform distribution\n'.format(sep))
+        for nntm, unif in zip(nntm_experimental_data, uniform_experimental_data):
+            f.write('{}{}{}\n'.format(nntm, sep, unif))
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
@@ -66,3 +84,4 @@ if __name__ == '__main__':
     write_plot_data(base_input_name, 'num_leaves_', leaves, args)
     write_plot_data(base_input_name, 'root_degree_', root_deg, args)
     write_plot_data(base_input_name, 'cd_sums_', contacts, args)
+    write_plot_data_experimental(base_input_name, 'ladder_distance_')

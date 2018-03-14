@@ -69,7 +69,8 @@ def make_plots(base_name, stat_prefix, args, size, xlabel, dist, truncate_left=F
         'cd_sums_' : 'contact distance sums',
         'num_leaves_' : 'number of leaves',
         'root_degree_' : 'root degree',
-        'height_' : 'height,'
+        'height_' : 'height',
+        'ladder_distance_' : 'ladder distance',
     }
     for (my_plot, log_prefix) in ((reg_plot, ''), (log_plot, 'log_')):
         plot_name = stat_prefix + log_prefix + base_name[:-4] + '.png'
@@ -104,6 +105,7 @@ if __name__ == '__main__':
 
     base_name = 'n={}_dist={}_mixingTime={}_sampleInterval={}_numSamples={}.txt'.format(args.n, distribution, args.mixing_time, args.sample_interval, args.num_samples)
 
+    make_plots(base_name, 'ladder_distance_', args, 5, 'ladder distance', distribution, truncate_right=True)
     make_plots(base_name, 'height_', args, 5, 'height', distribution, truncate_right=True)
     make_plots(base_name, 'cd_sums_', args, 5, 'contact distance', distribution)
     make_plots(base_name, 'num_leaves_', args, 5, 'number of leaves', distribution, truncate_right=True, truncate_left=True)
