@@ -11,6 +11,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
+from progress.bar import Bar
 
 import argparse
 import math
@@ -223,6 +224,9 @@ def my_project(start_word, mixing_time, sample_interval, num_samples, distributi
     batch_size = min(int(1e6), int(num_samples / 10))
     assert num_samples % batch_size == 0 ### don't want to discard any samples
 
+    new_bar = lambda: Bar('', max=batch_size, suffix='%(index)d/%(max)d - %(percent).1f%% - %(eta)ds remaining (%(elapsed_td)ss elapsed)')
+
+    bar = new_bar()
     while samp_count < num_samples:  # I need my program to stop after I have collected num_samples amount of samples
         if step_count == sample_interval: # after sample_interval amount of steps, append the curr_word to my list 'samples' (for loop)
             ### calculate prelimiary characteristics
@@ -255,9 +259,10 @@ def my_project(start_word, mixing_time, sample_interval, num_samples, distributi
 
             step_count = 0
             samp_count += 1
-            if samp_count % checkpoint == 0:
-                print('collected {} of {} samples'.format(samp_count, num_samples))
+            bar.next()
+
             if samp_count % batch_size == 0:
+                bar.finish()
                 print('saving batch {} of {}'.format(samp_count / batch_size, num_samples / batch_size))
                 for array, type_prefix in (
                     (num_leaves_values, 'num_leaves_'),
@@ -277,6 +282,8 @@ def my_project(start_word, mixing_time, sample_interval, num_samples, distributi
                 height_values = []
                 ladder_distance_values = []
                 branching_values = []
+
+                bar = new_bar()
         else:
             combined_move(curr_word, distribution)
             step_count += 1
