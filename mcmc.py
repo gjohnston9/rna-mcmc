@@ -151,6 +151,39 @@ def height(word):
     return tree_height
 
 
+def ladder_distance(word):
+    curr_depth = 0
+    max_depth = 0
+    for i, char in enumerate(word):
+        if char == 1:
+            curr_depth += 1
+            if curr_depth > max_depth:
+                index_of_deepest_vertex = i
+                max_depth = curr_depth
+        else:
+            curr_depth -= 1
+
+    # now, find the vertex farthest from the deepest vertex
+    max_length = 0 # length of path from deepes vertex to the farthest vertex that has been found so far
+    for start, direction, close_char in ((index_of_deepest_vertex - 1, -1, 1), (index_of_deepest_vertex + 2, 1, 0)):
+        curr_depth = 0
+        curr_length = 0
+        for char in word[start::direction]:
+            if char == close_char:
+                if curr_depth == 0:
+                    curr_length += 1
+                    max_length = max(max_length, curr_length)
+                else:
+                    curr_depth -= 1
+                    curr_length -= 1
+            else:
+                curr_depth += 1
+                curr_length += 1
+                max_length = max(max_length, curr_length)
+
+    return max_length + 1
+
+
 def my_project(start_word, mixing_time, sample_interval, num_samples, distribution, base_prefix, base_name):
     """
     start_word: word to start with
@@ -181,21 +214,37 @@ def my_project(start_word, mixing_time, sample_interval, num_samples, distributi
     num_leaves_frequency = np.zeros(n, dtype='uint32')
     root_degree_frequency = np.zeros(n, dtype='uint32')
     height_frequency = np.zeros(n, dtype='uint32')
+    ladder_distance_frequency = np.zeros(n, dtype='uint32')
 
     num_leaves_values = []
     root_degree_values = []
     height_values = []
+    ladder_distance_values = []
 
     batch_size = min(int(1e6), int(num_samples / 10))
     assert num_samples % batch_size == 0 ### don't want to discard any samples
 
     while samp_count < num_samples:  # I need my program to stop after I have collected num_samples amount of samples
         if step_count == sample_interval: # after sample_interval amount of steps, append the curr_word to my list 'samples' (for loop)
-            update_frequencies(curr_word, num_leaves_frequency, root_degree_frequency, height_frequency) ### calculate updated statistics for curr_word
+            ### calculate characteristics
+            leaves = num_leaves(curr_word)
+            degree = root_degree(curr_word)
+            tree_height = height(curr_word)
+            distance = ladder_distance(curr_word)
             cds = contact_distances(curr_word)
+
+            ### update frequencies
+            num_leaves_frequency[leaves-1] += 1
+            root_degree_frequency[degree-1] += 1
+            height_frequency[tree_height-1] += 1
+            ladder_distance_frequency[distance-1] += 1
             cd_sums = map(add, cd_sums, cds)
 
-            update_samples(curr_word, samp_count, num_leaves_values, root_degree_values, height_values)
+            ### update values
+            num_leaves_values.append(leaves)
+            root_degree_values.append(degree)
+            height_values.append(tree_height)
+            ladder_distance_values.append(distance)
 
             step_count = 0
             samp_count += 1
@@ -206,7 +255,8 @@ def my_project(start_word, mixing_time, sample_interval, num_samples, distributi
                 for array, type_prefix in (
                     (num_leaves_values, 'num_leaves_'),
                     (root_degree_values, 'root_degree_'),
-                    (height_values, 'height_')):
+                    (height_values, 'height_'),
+                    (ladder_distance_values, 'ladder_distance_')):
 
                     filename = os.path.join('data', 'by_sample', base_prefix + type_prefix + base_name)
                     print('saving {} to {}'.format(type_prefix[:-1], filename))
@@ -217,6 +267,7 @@ def my_project(start_word, mixing_time, sample_interval, num_samples, distributi
                 num_leaves_values = []
                 root_degree_values = []
                 height_values = []
+                ladder_distance_values = []
 
         else:
             combined_move(curr_word, distribution)
@@ -225,30 +276,9 @@ def my_project(start_word, mixing_time, sample_interval, num_samples, distributi
         'cd_sums' : cd_sums,
         'num_leaves' : num_leaves_frequency,
         'root_degree' : root_degree_frequency,
-        'height' : height_frequency
+        'height' : height_frequency,
+        'ladder_distance' : ladder_distance_frequency,
         }
-
-
-def update_frequencies(word, num_leaves_frequency, root_degree_frequency, height_frequency):
-    leaves = num_leaves(word)
-    num_leaves_frequency[leaves-1] += 1
-
-    degree = root_degree(word)
-    root_degree_frequency[degree-1] += 1
-
-    tree_height = height(word)
-    height_frequency[tree_height-1] += 1
-
-
-def update_samples(word, i, num_leaves_values, root_degree_values, height_values):
-    leaves = num_leaves(word)
-    num_leaves_values.append(leaves)
-
-    degree = root_degree(word)
-    root_degree_values.append(degree)
-
-    tree_height = height(word)
-    height_values.append(tree_height)
 
 
 if __name__ == '__main__':
@@ -301,12 +331,14 @@ if __name__ == '__main__':
     num_leaves_frequency = results['num_leaves']
     root_degree_frequency = results['root_degree']
     height_frequency = results['height']
+    ladder_distance_frequency = results['ladder_distance']
 
     for array, prefix in (
         (cd_sums, 'cd_sums_'),
         (num_leaves_frequency, 'num_leaves_'),
         (root_degree_frequency, 'root_degree_'),
-        (height_frequency, 'height_')):
+        (height_frequency, 'height_'),
+        (ladder_distance_frequency, 'ladder_distance_')):
 
         filename = args.prefix + prefix + base_name
         filepath = os.path.join('data', 'by_frequency', filename)
