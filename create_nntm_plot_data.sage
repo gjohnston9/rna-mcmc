@@ -29,7 +29,7 @@ def write_plot_data(base_name, stat_prefix, expectation_function, args):
     source_name = os.path.join('data', 'by_frequency', stat_prefix + base_name)
     with open(source_name, 'r') as f:
         experimental_data = list(map(int, f.readlines()))
-    r = args.num_samples / catalan_number(args.n)
+    r = args.nntm_num_samples / catalan_number(args.n)
     expectation_data = [r * expectation_function(args.n, x) for x in range(1, len(experimental_data)+1)]
     assert len(expectation_data) == len(experimental_data)
 
@@ -46,9 +46,9 @@ def write_plot_data(base_name, stat_prefix, expectation_function, args):
             f.write('{}{}{}\n'.format(experimental, sep, expected.n()))
 
 
-def write_plot_data_experimental(nntm_base_name, stat_prefix):
+def write_plot_data_experimental(nntm_base_name, uniform_base_name, stat_prefix):
     nntm_source_name = os.path.join('data', 'by_frequency', stat_prefix + nntm_base_name)
-    uniform_source_name = nntm_source_name.replace('nntm', 'uniform')
+    uniform_source_name = os.path.join('data', 'by_frequency', stat_prefix + uniform_base_name)
     with open(nntm_source_name, 'r') as f:
         nntm_experimental_data = list(map(int, f.readlines()))
     with open(uniform_source_name, 'r') as f:
@@ -68,13 +68,20 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument('n', type=int, help='value of n to use')
-    parser.add_argument('mixing_time', type=int)
-    parser.add_argument('sample_interval', type=int)
-    parser.add_argument('num_samples', type=int)
+    parser.add_argument('nntm_mixing_time', type=int)
+    parser.add_argument('nntm_sample_interval', type=int)
+    parser.add_argument('nntm_num_samples', type=int)
+
+    parser.add_argument('uniform_mixing_time', type=int)
+    parser.add_argument('uniform_sample_interval', type=int)
+    parser.add_argument('uniform_num_samples', type=int)
 
     args = parser.parse_args()
 
-    base_input_name = 'n={}_dist=nntm_mixingTime={}_sampleInterval={}_numSamples={}.txt'.format(args.n, args.mixing_time, args.sample_interval, args.num_samples)
+    base_input_name = 'n={}_dist=nntm_mixingTime={}_sampleInterval={}_numSamples={}.txt'.format(
+        args.n, args.nntm_mixing_time, args.nntm_sample_interval, args.nntm_num_samples)
+    unif_ladder_distance_input_name = 'n={}_dist=uniform_mixingTime={}_sampleInterval={}_numSamples={}.txt'.format(
+        args.n, args.uniform_mixing_time, args.uniform_sample_interval, args.uniform_num_samples)
 
     min_heights = {h : min_height(args.n, h) for h in range(1, args.n+4)}
     def height(n, h, min_heights=min_heights):
@@ -84,4 +91,4 @@ if __name__ == '__main__':
     write_plot_data(base_input_name, 'num_leaves_', leaves, args)
     write_plot_data(base_input_name, 'root_degree_', root_deg, args)
     write_plot_data(base_input_name, 'cd_sums_', contacts, args)
-    write_plot_data_experimental(base_input_name, 'ladder_distance_')
+    write_plot_data_experimental(base_input_name, unif_ladder_distance_input_name, 'ladder_distance_')
