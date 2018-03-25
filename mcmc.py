@@ -71,10 +71,9 @@ def combined_move(curr_word, distribution):
             swap(curr_word, posA, posB) # curr_arcs is now new_word
 
 
-# energy function rewritten by Anna to be faster and avoid recursion depth issues
-def calculate_energy(word):
-    root_deg = 0
-    num_leaves = 0
+def calculate_useful_characteristics(word):
+    degree = 0
+    leaves = 0
     int_nodes = 0
     num_edges = len(word) / 2
     curr_depth = 0
@@ -85,14 +84,14 @@ def calculate_energy(word):
         if candidate_int_node_depths != [] and candidate_int_node_depths[len(candidate_int_node_depths) - 1] == curr_depth:
                     candidate = candidate_int_node_depths.pop()
         if letter == 1: # open of arc
-            if curr_depth==0:
-                root_deg+=1
+            if curr_depth == 0:
+                degree += 1
             if prev_letter == 1: # two opens in a row
                 candidate_int_node_depths.append(curr_depth)
             curr_depth+=1
         else: # close
             if prev_letter == 1: # leaf
-                num_leaves+=1
+                leaves+=1
             else: # two closes in a row
                 if candidate == curr_depth: # internal node
                     int_nodes+=1
@@ -100,7 +99,21 @@ def calculate_energy(word):
         prev_letter = letter
         candidate=-1
 
-    return (-.4*root_deg + 2.3*num_leaves +1.3*int_nodes) - .1*num_edges
+    return {
+        'degree' : degree,
+        'leaves' : leaves,
+        'int_nodes' : int_nodes,
+        'num_edges' : num_edges,
+    }
+
+
+def calculate_energy(word):
+    characteristics = calculate_useful_characteristics(word)
+    degree = characteristics['degree']
+    leaves = characteristics['leaves']
+    int_nodes = characteristics['int_nodes']
+    num_edges = characteristics['num_edges']
+    return (-.4*degree + 2.3*leaves +1.3*int_nodes) - .1*num_edges
 
 
 def contact_distances(word): # For any dyck word, returns the contact distances of the corresponding matching
@@ -118,25 +131,10 @@ def contact_distances(word): # For any dyck word, returns the contact distances 
     return cds
 
 
-def num_leaves(word):
-    leaves = 0
-    for char1, char2 in zip(word[:-1], word[1:]):
-        if (char1 == 1) and (char2 == 0):
-            leaves += 1
-    return leaves
-
-
-def root_degree(word):
-    degree = 0
-    curr_depth = 0
-    for char in word:
-        if char == 1:
-            if curr_depth == 0:
-                degree += 1
-            curr_depth += 1
-        else:
-            curr_depth -= 1
-    return degree
+def avg_branching(word, root_deg, int_nodes, leaves):
+    n = len(word) / 2
+    k = 0 if root_deg > 1 else 1
+    return (n - int_nodes - k) / (n + 1.0 - int_nodes - leaves - k)
 
 
 def height(word):
@@ -220,17 +218,24 @@ def my_project(start_word, mixing_time, sample_interval, num_samples, distributi
     root_degree_values = []
     height_values = []
     ladder_distance_values = []
+    branching_values = []
 
     batch_size = min(int(1e6), int(num_samples / 10))
     assert num_samples % batch_size == 0 ### don't want to discard any samples
 
     while samp_count < num_samples:  # I need my program to stop after I have collected num_samples amount of samples
         if step_count == sample_interval: # after sample_interval amount of steps, append the curr_word to my list 'samples' (for loop)
-            ### calculate characteristics
-            leaves = num_leaves(curr_word)
-            degree = root_degree(curr_word)
+            ### calculate prelimiary characteristics
+            characteristics = calculate_useful_characteristics(curr_word)
+            int_nodes = characteristics['int_nodes']
+            num_edges = characteristics['num_edges']
+
+            ### calculate characteristics that will be saved
+            leaves = characteristics['leaves']
+            degree = characteristics['degree']
             tree_height = height(curr_word)
             distance = ladder_distance(curr_word)
+            branching = avg_branching(curr_word, degree, int_nodes, leaves)
             cds = contact_distances(curr_word)
 
             ### update frequencies
@@ -238,6 +243,7 @@ def my_project(start_word, mixing_time, sample_interval, num_samples, distributi
             root_degree_frequency[degree-1] += 1
             height_frequency[tree_height-1] += 1
             ladder_distance_frequency[distance-1] += 1
+            # no frequency for avg branching since it's a float
             cd_sums = map(add, cd_sums, cds)
 
             ### update values
@@ -245,6 +251,7 @@ def my_project(start_word, mixing_time, sample_interval, num_samples, distributi
             root_degree_values.append(degree)
             height_values.append(tree_height)
             ladder_distance_values.append(distance)
+            branching_values.append(branching)
 
             step_count = 0
             samp_count += 1
@@ -256,7 +263,8 @@ def my_project(start_word, mixing_time, sample_interval, num_samples, distributi
                     (num_leaves_values, 'num_leaves_'),
                     (root_degree_values, 'root_degree_'),
                     (height_values, 'height_'),
-                    (ladder_distance_values, 'ladder_distance_')):
+                    (ladder_distance_values, 'ladder_distance_'),
+                    (branching_values, 'avg_branching_')):
 
                     filename = os.path.join('data', 'by_sample', base_prefix + type_prefix + base_name)
                     print('saving {} to {}'.format(type_prefix[:-1], filename))
@@ -268,7 +276,7 @@ def my_project(start_word, mixing_time, sample_interval, num_samples, distributi
                 root_degree_values = []
                 height_values = []
                 ladder_distance_values = []
-
+                branching_values = []
         else:
             combined_move(curr_word, distribution)
             step_count += 1
