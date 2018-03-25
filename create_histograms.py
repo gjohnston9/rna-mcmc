@@ -6,8 +6,8 @@ import os
 
 def create_histogram(characteristic_name, uniform, nntm, save_name):
 	fig, ax = plt.subplots()
-	ax.hist(uniform, normed=True, color='green', alpha=0.5, label='uniform distribution')
 	ax.hist(nntm, normed=True, color='red', alpha=0.5, label='thermodynamic distribution')
+	ax.hist(uniform, normed=True, color='green', alpha=0.5, label='uniform distribution')
 
 	ax.set(
 		title='Comparison between {} under\nuniform and thermodynamic distributions'.format(characteristic_name),
@@ -18,8 +18,15 @@ def create_histogram(characteristic_name, uniform, nntm, save_name):
 
 if __name__ == '__main__':
 	n = 1000
-	unif = Namespace(mixingTime=0, sampleInterval=1000, numSamples=10000)
-	nntm = Namespace(mixingTime=0, sampleInterval=10000, numSamples=1000)
+
+	# important run
+	unif = Namespace(mixingTime=100000, sampleInterval=1000, numSamples=10000)
+	nntm = Namespace(mixingTime=10000000, sampleInterval=10000, numSamples=10000)
+
+	# first run
+	# unif = Namespace(mixingTime=0, sampleInterval=1000, numSamples=10000)
+	# nntm = Namespace(mixingTime=0, sampleInterval=10000, numSamples=1000)
+
 	unif_data_name = os.path.join('data', 'by_sample',
 		'avg_branching_n={}_dist=uniform_mixingTime={}_sampleInterval={}_numSamples={}.txt'.format(
 			n, unif.mixingTime, unif.sampleInterval, unif.numSamples))
