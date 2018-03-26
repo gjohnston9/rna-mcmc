@@ -47,7 +47,19 @@ def construct_plot(expectation_data, experimental_data, size, xlabel, use_log, d
     my_plot = plot_expectation + plot_experimental
     my_plot.set_axes_range(ymin=min_y, ymax=max_y)
     my_plot.axes_labels([xlabel, 'log of frequency' if use_log else 'frequency'])
-    my_plot.set_legend_options(markerscale=8.0/size)
+
+    labels = my_plot._extra_kwds.get('axes_labels')
+    displace = -.18
+    if labels and labels[0]:
+        displace -= .005 * my_plot.fontsize()
+
+    my_plot.set_legend_options(
+        bbox_to_anchor=(0., displace, 1., .102),
+        loc=3,
+        mode='expand',
+        borderaxespad=0.,
+        markerscale=8.0/size,
+    )
 
     return my_plot
 
@@ -72,14 +84,22 @@ def make_plots(base_name, stat_prefix, args, size, xlabel, dist, truncate_left=F
         'height_' : 'height',
         'ladder_distance_' : 'ladder distance',
     }
+
+    no_expected_data = (stat_prefix == 'ladder_distance_') # don't have expectations for ladder distance so this plot is of two sets of experimental data
+
     for (my_plot, log_prefix) in ((reg_plot, ''), (log_plot, 'log_')):
         plot_name = stat_prefix + log_prefix + base_name[:-4] + '.png'
         plot_path = os.path.join('plots', plot_name)
         print('saving {} to: {}'.format(stat_prefix[:-1], plot_path))
         dist_to_use = 'uniform' if dist == 'uniform' else 'thermodynamic'
-        plot_title = 'frequencies of {} under {} distribution\nvs. expected frequencies under uniform distribution'.format(
-            char_display_name[stat_prefix], dist_to_use)
-        params = 'with n={:,}, initial mixing time of {:,}, sample\ninterval of {:,} and number of samples of {:,}'.format(
+        other_dist = 'thermodynamic' if dist_to_use == 'uniform' else 'uniform'
+        if no_expected_data:
+            plot_title = 'frequencies of {} under \n{} distribution vs. {} distribution'.format(
+                char_display_name[stat_prefix], dist_to_use, other_dist)
+        else:
+            plot_title = 'frequencies of {} under {} distribution\nvs. expected frequencies under uniform distribution'.format(
+                char_display_name[stat_prefix], dist_to_use)
+        params = 'with n={:,}, initial mixing time of {:,}, sample\ninterval of {:,}, and {:,} samples'.format(
             args.n, args.mixing_time, args.sample_interval, args.num_samples)
         my_plot.save(plot_path, title='\n '.join([plot_title, params]) + '\n\n')
 
