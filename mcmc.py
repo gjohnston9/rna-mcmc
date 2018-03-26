@@ -227,6 +227,9 @@ def my_project(start_word, mixing_time, sample_interval, num_samples, distributi
     new_bar = lambda: Bar('', max=batch_size, suffix='%(index)d/%(max)d - %(percent).1f%% - %(eta)ds remaining (%(elapsed_td)ss elapsed)')
 
     bar = new_bar()
+    file_open_mode = 'w' # the first time we open files to write data, we use 'w' to erase whatever was already there
+    # it is changed to 'a' after the first time opening files
+
     while samp_count < num_samples:  # I need my program to stop after I have collected num_samples amount of samples
         if step_count == sample_interval: # after sample_interval amount of steps, append the curr_word to my list 'samples' (for loop)
             ### calculate prelimiary characteristics
@@ -273,16 +276,16 @@ def my_project(start_word, mixing_time, sample_interval, num_samples, distributi
 
                     filename = os.path.join('data', 'by_sample', base_prefix + type_prefix + base_name)
                     print('saving {} to {}'.format(type_prefix[:-1], filename))
-                    with open(filename, 'a') as f:
+                    with open(filename, file_open_mode) as f:
                         for sample in array:
                             f.write('{}\n'.format(sample))
-
                 num_leaves_values = []
                 root_degree_values = []
                 height_values = []
                 ladder_distance_values = []
                 branching_values = []
 
+                file_open_mode = 'a' # for the rest of the runs, append instead of overwriting files
                 bar = new_bar()
         else:
             combined_move(curr_word, distribution)
