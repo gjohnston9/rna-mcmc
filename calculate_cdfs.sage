@@ -2,6 +2,15 @@ import argparse
 import os
 
 
+def contacts(n,d): # cd for uniform distribution
+    if d % 2 == 1:
+        return 0
+    answer = (1.0 / (d/2 +1)) * (binomial(d, d/2) * binomial(2*n - d -1, n - d/2 -1))
+    if d <= 10:
+        print('{} -> {}'.format(d, answer))
+    return answer
+
+
 def num_leaves(n, k):
     return (1.0 / n) * binomial(n, k) * binomial(n, k - 1)
 
@@ -39,15 +48,16 @@ if __name__ == '__main__':
         """
         return min_heights[h] - min_heights[h+1]
 
-    for name, func in (
-        ('num_leaves', num_leaves),
-        ('root_degree', root_deg),
-        ('height', tree_height)):
+    for name, func, div, k_min, k_max in (
+        ('num_leaves', num_leaves, Cn, 1, n+1),
+        ('root_degree', root_deg, Cn, 1, n+1),
+        ('height', tree_height, Cn, 1, n+1),
+        ('cd_sums', contacts, Cn * n, 0, 2 * n - 1)):
 
         filename = '{}_n={}_cdf.txt'.format(name, n)
         filename = os.path.join(out_dir, filename)
         with open(filename, 'w') as f:
             total = 0
-            for k in range(1, n+1):
-                total += func(n, k) / Cn
+            for k in range(k_min, k_max):
+                total += func(n, k) / div
                 f.write('{}\n'.format(total.n(digits=14)))
