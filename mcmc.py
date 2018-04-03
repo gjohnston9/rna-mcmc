@@ -132,6 +132,13 @@ def contact_distances(word): # For any dyck word, returns the contact distances 
     return cds
 
 
+def contact_distances_average(contact_distances):
+    total = 0
+    for index, val in enumerate(contact_distances):
+        total += index * val
+    return total  / (1.0 * len(contact_distances))
+
+
 def avg_branching(word, root_deg, int_nodes, leaves):
     n = len(word) / 2
     k = 0 if root_deg > 1 else 1
@@ -183,6 +190,10 @@ def ladder_distance(word):
     return max_length + 1
 
 
+# def average_ladder_distance(word):
+
+
+
 def my_project(start_word, mixing_time, sample_interval, num_samples, distribution, base_prefix, base_name):
     """
     start_word: word to start with
@@ -220,6 +231,7 @@ def my_project(start_word, mixing_time, sample_interval, num_samples, distributi
     height_values = []
     ladder_distance_values = []
     branching_values = []
+    cd_averages_values = []
 
     batch_size = min(int(1e6), int(num_samples / 10))
     assert num_samples % batch_size == 0 ### don't want to discard any samples
@@ -244,6 +256,7 @@ def my_project(start_word, mixing_time, sample_interval, num_samples, distributi
             distance = ladder_distance(curr_word)
             branching = avg_branching(curr_word, degree, int_nodes, leaves)
             cds = contact_distances(curr_word)
+            cd_averages = contact_distances_average(cds)
 
             ### update frequencies
             num_leaves_frequency[leaves-1] += 1
@@ -259,6 +272,7 @@ def my_project(start_word, mixing_time, sample_interval, num_samples, distributi
             height_values.append(tree_height)
             ladder_distance_values.append(distance)
             branching_values.append(branching)
+            cd_averages_values.append(cd_averages)
 
             step_count = 0
             samp_count += 1
@@ -272,7 +286,8 @@ def my_project(start_word, mixing_time, sample_interval, num_samples, distributi
                     (root_degree_values, 'root_degree_'),
                     (height_values, 'height_'),
                     (ladder_distance_values, 'ladder_distance_'),
-                    (branching_values, 'avg_branching_')):
+                    (branching_values, 'avg_branching_'),
+                    (cd_averages_values, 'cd_averages_')):
 
                     filename = os.path.join('data', 'by_sample', base_prefix + type_prefix + base_name)
                     print('saving {} to {}'.format(type_prefix[:-1], filename))
@@ -284,6 +299,7 @@ def my_project(start_word, mixing_time, sample_interval, num_samples, distributi
                 height_values = []
                 ladder_distance_values = []
                 branching_values = []
+                cd_averages_values = []
 
                 file_open_mode = 'a' # for the rest of the runs, append instead of overwriting files
                 bar = new_bar()
