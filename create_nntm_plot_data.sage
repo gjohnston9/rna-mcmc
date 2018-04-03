@@ -46,9 +46,9 @@ def write_plot_data(base_name, stat_prefix, expectation_function, args):
             f.write('{}{}{}\n'.format(experimental, sep, expected.n()))
 
 
-def write_plot_data_experimental(nntm_base_name, uniform_base_name, stat_prefix):
-    nntm_source_name = os.path.join('data', 'by_frequency', stat_prefix + nntm_base_name)
-    uniform_source_name = os.path.join('data', 'by_frequency', stat_prefix + uniform_base_name)
+def write_plot_data_experimental(nntm_base_name, uniform_base_name, stat_prefix, sub_dir):
+    nntm_source_name = os.path.join('data', sub_dir, stat_prefix + nntm_base_name)
+    uniform_source_name = os.path.join('data', sub_dir, stat_prefix + uniform_base_name)
     with open(nntm_source_name, 'r') as f:
         nntm_experimental_data = list(map(int, f.readlines()))
     with open(uniform_source_name, 'r') as f:
@@ -91,4 +91,5 @@ if __name__ == '__main__':
     write_plot_data(base_input_name, 'num_leaves_', leaves, args)
     write_plot_data(base_input_name, 'root_degree_', root_deg, args)
     write_plot_data(base_input_name, 'cd_sums_', contacts, args)
-    write_plot_data_experimental(base_input_name, unif_ladder_distance_input_name, 'ladder_distance_')
+    write_plot_data_experimental(base_input_name, unif_ladder_distance_input_name, 'ladder_distance_', 'by_frequency')
+    write_plot_data_experimental(base_input_name, unif_ladder_distance_input_name, 'cd_averages_', 'by_sample')

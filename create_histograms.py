@@ -2,11 +2,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from argparse import Namespace
+import math
 import os
 
 def create_histogram(characteristic_name, uniform, nntm, save_name):
+	uniform = [math.log(x) for x in uniform]
+	nntm = [math.log(x) for x in nntm]
+
 	min_x = min(min(uniform), min(nntm))
 	max_x = max(max(uniform), max(nntm))
+	print(max_x)
 	padding = (max_x - min_x) / 8.0 # adding an extra 1/8 of whitespace before and after data
 	min_x -= padding
 	max_x += padding
@@ -20,7 +25,7 @@ def create_histogram(characteristic_name, uniform, nntm, save_name):
 	ax.set(
 		title='Comparison between {} under\nuniform and thermodynamic distributions'.format(characteristic_name),
 		xlabel=characteristic_name,
-		ylabel='frequency')
+		ylabel='log of frequency')
 	ax.legend()
 	print('saving {} to {}'.format(characteristic_name, save_name))
 	plt.savefig(save_name)
@@ -32,9 +37,6 @@ if __name__ == '__main__':
 	unif = Namespace(mixingTime=100000, sampleInterval=1000, numSamples=10000)
 	nntm = Namespace(mixingTime=10000000, sampleInterval=10000, numSamples=10000)
 
-	# first run
-	# unif = Namespace(mixingTime=0, sampleInterval=1000, numSamples=10000)
-	# nntm = Namespace(mixingTime=0, sampleInterval=10000, numSamples=1000)
 
 	unif_data_name = os.path.join('data', 'by_sample',
 		'avg_branching_n={}_dist=uniform_mixingTime={}_sampleInterval={}_numSamples={}.txt'.format(
@@ -47,9 +49,32 @@ if __name__ == '__main__':
 	with open(nntm_data_name, 'r') as f:
 		nntm_data = list(map(lambda line: float(line.strip()), f))
 	### caution: long filename incoming
-	save_name = 'avg_branching_n={}_unif_mixing={}_gap={}_samples={}_nntm_mixing={}_gap={}_samples={}.png'.format(
+	save_name = 'avg_branching_log_n={}_unif_mixing={}_gap={}_samples={}_nntm_mixing={}_gap={}_samples={}.png'.format(
 		n,
 		unif.mixingTime, unif.sampleInterval, unif.numSamples,
 		nntm.mixingTime, nntm.sampleInterval, nntm.numSamples)
 	save_name_path = os.path.join('plots', save_name)
 	create_histogram('average branching', unif_data, nntm_data, save_name_path)
+
+
+	# first run
+	unif = Namespace(mixingTime=0, sampleInterval=1000, numSamples=10000)
+	nntm = Namespace(mixingTime=0, sampleInterval=1000, numSamples=10000)
+
+	unif_data_name = os.path.join('data', 'by_sample',
+		'cd_averages_n={}_dist=uniform_mixingTime={}_sampleInterval={}_numSamples={}.txt'.format(
+			n, unif.mixingTime, unif.sampleInterval, unif.numSamples))
+	nntm_data_name = os.path.join('data', 'by_sample',
+		'cd_averages_n={}_dist=nntm_mixingTime={}_sampleInterval={}_numSamples={}.txt'.format(
+			n, nntm.mixingTime, nntm.sampleInterval, nntm.numSamples))
+	with open(unif_data_name, 'r') as f:
+		unif_data = list(map(lambda line: float(line.strip()), f))
+	with open(nntm_data_name, 'r') as f:
+		nntm_data = list(map(lambda line: float(line.strip()), f))
+	### caution: long filename incoming
+	save_name = 'cd_averages_log_n={}_unif_mixing={}_gap={}_samples={}_nntm_mixing={}_gap={}_samples={}.png'.format(
+		n,
+		unif.mixingTime, unif.sampleInterval, unif.numSamples,
+		nntm.mixingTime, nntm.sampleInterval, nntm.numSamples)
+	save_name_path = os.path.join('plots', save_name)
+	create_histogram('contact distance averages', unif_data, nntm_data, save_name_path)

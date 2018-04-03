@@ -83,6 +83,7 @@ def make_plots(base_name, stat_prefix, args, size, xlabel, dist, truncate_left=F
         'root_degree_' : 'root degree',
         'height_' : 'height',
         'ladder_distance_' : 'ladder distance',
+        'cd_averages_' : 'contact distance averages',
     }
 
     no_expected_data = (stat_prefix == 'ladder_distance_') # don't have expectations for ladder distance so this plot is of two sets of experimental data
@@ -126,6 +127,7 @@ if __name__ == '__main__':
     base_name = 'n={}_dist={}_mixingTime={}_sampleInterval={}_numSamples={}.txt'.format(args.n, distribution, args.mixing_time, args.sample_interval, args.num_samples)
 
     make_plots(base_name, 'ladder_distance_', args, 5, 'ladder distance', distribution, truncate_right=True)
+    make_plots(base_name, 'cd_averages_', args, 5, 'contact distance averages', distribution)
     make_plots(base_name, 'height_', args, 5, 'height', distribution, truncate_right=True)
     make_plots(base_name, 'cd_sums_', args, 5, 'contact distance', distribution)
     make_plots(base_name, 'num_leaves_', args, 5, 'number of leaves', distribution, truncate_right=True, truncate_left=True)
