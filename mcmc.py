@@ -203,7 +203,7 @@ def my_project(start_word, mixing_time, sample_interval, num_samples, distributi
     """
     assert distribution in ('uniform', 'nntm')
 
-    print('running my_project with mixing_time={}, sample_interval={}, num_samples={}'.format(
+    print('running my_project with mixing_time={0}, sample_interval={1}, num_samples={2}'.format(
         mixing_time,
         sample_interval,
         num_samples))
@@ -213,7 +213,7 @@ def my_project(start_word, mixing_time, sample_interval, num_samples, distributi
     # curr_energy = get_arcs_init_energy(len(start_word)/2)
     for i in range(mixing_time):  # I need my movingWithProb to run mixing_time amount of times (while loop)
         if i > 0 and i % (mixing_time / 10) == 0:
-            print('finished {} of {} mixing steps'.format(i, mixing_time))
+            print('finished {0} of {1} mixing steps'.format(i, mixing_time))
         combined_move(curr_word, distribution)
     samp_count = 0
     step_count = 0
@@ -274,7 +274,7 @@ def my_project(start_word, mixing_time, sample_interval, num_samples, distributi
             samp_count += 1
 
             if samp_count % batch_size == 0:
-                print('saving batch {} of {}'.format(samp_count / batch_size, num_samples / batch_size))
+                print('saving batch {0} of {1}'.format(samp_count / batch_size, num_samples / batch_size))
                 for array, type_prefix in (
                     (num_leaves_values, 'num_leaves_'),
                     (root_degree_values, 'root_degree_'),
@@ -284,10 +284,10 @@ def my_project(start_word, mixing_time, sample_interval, num_samples, distributi
                     (cd_averages_values, 'cd_averages_')):
 
                     filename = os.path.join('data', 'by_sample', base_prefix + type_prefix + base_name)
-                    print('saving {} to {}'.format(type_prefix[:-1], filename))
+                    print('saving {0} to {1}'.format(type_prefix[:-1], filename))
                     with open(filename, file_open_mode) as f:
                         for sample in array:
-                            f.write('{}\n'.format(sample))
+                            f.write('{0}\n'.format(sample))
                 num_leaves_values = []
                 root_degree_values = []
                 height_values = []
@@ -344,13 +344,13 @@ if __name__ == '__main__':
     else:
         start_word = [1] * args.n + [0] * args.n
 
-    base_name = 'n={}_dist={}_mixingTime={}_sampleInterval={}_numSamples={}.txt'.format(
+    base_name = 'n={0}_dist={1}_mixingTime={2}_sampleInterval={3}_numSamples={4}.txt'.format(
         args.n, distribution, args.mixing_time, args.sample_interval, args.num_samples)
 
     start_time = time.time()
     results = my_project(start_word, args.mixing_time, args.sample_interval, args.num_samples, distribution, args.prefix, base_name)
     end_time = time.time()
-    print('Elapsed time was {:.0f} seconds.'.format(end_time - start_time))
+    print('Elapsed time was {0:.0f} seconds.'.format(end_time - start_time))
     
     ### np ndarrays
     cd_sums = results['cd_sums']
@@ -369,5 +369,5 @@ if __name__ == '__main__':
 
         filename = args.prefix + prefix + base_name
         filepath = os.path.join('data', 'by_frequency', filename)
-        print('saving {} to data/by_frequency/'.format(filepath))
+        print('saving {0} to data/by_frequency/'.format(filepath))
         np.savetxt(filepath, array, fmt='%d')
