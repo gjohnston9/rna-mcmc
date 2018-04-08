@@ -50,9 +50,9 @@ def write_plot_data_experimental(nntm_base_name, uniform_base_name, stat_prefix,
     nntm_source_name = os.path.join('data', sub_dir, stat_prefix + nntm_base_name)
     uniform_source_name = os.path.join('data', sub_dir, stat_prefix + uniform_base_name)
     with open(nntm_source_name, 'r') as f:
-        nntm_experimental_data = list(map(int, f.readlines()))
+        nntm_experimental_data = list(map(float, f.readlines()))
     with open(uniform_source_name, 'r') as f:
-        uniform_experimental_data = list(map(int, f.readlines()))
+        uniform_experimental_data = list(map(float, f.readlines()))
     assert len(nntm_experimental_data) == len(uniform_experimental_data)
 
     output_path = os.path.join('data', 'processed_plot_data', 'plotData_' + stat_prefix + nntm_base_name)

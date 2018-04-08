@@ -4,4 +4,7 @@ for run in {1..4}; do
   pypy mcmc.py 1000 0 1 10000000 --uniform --prefix="run${run}_" --start_word_source="start_words/v${run}.txt";
 done
 
-alert;
+for run in {1..4}; do
+  echo run: $run
+  pypy mcmc.py 1000 0 1 10000000 --nntm --prefix="run${run}_" --start_word_source="start_words/v${run}.txt";
+done

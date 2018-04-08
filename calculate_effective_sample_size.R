@@ -2,16 +2,14 @@ library(coda)
 
 # stats = c("root_degree", "num_leaves", "height")
 stats = c("root_degree")
-# stats = c("num_leaves")
-# stats = c("height")
 
-limits = c(1000, 10000, 100000, 500000, 1000000, 10000000)
+limits = c(1000, 10000, 100000, 500000, 1000000)
 num_runs = 4
 
 n = 1000
 mixingTime = 0
 sampleInterval = 1
-numSamples = 10000000
+numSamples = 1000000
 
 stopifnot(all(limits <= numSamples))
 
@@ -37,7 +35,6 @@ for (stat in stats)
 			vals = append(vals, my_ess)
 		}
 
-		to_write = sprintf("mean=%.0f\nstd_dev=%.0f\n", mean(vals), sd(vals))
-		cat(to_write)
+		cat(sprintf("mean=%.0f\nstd_dev=%.0f\n", mean(vals), sd(vals)))
 	}
 }
