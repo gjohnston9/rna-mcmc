@@ -7,9 +7,6 @@
     # Compute chanceOfMove=min (1, exp(-new_word)/exp(-curr_word)) <---- this is MCMC
     # with prob chanceOfMove, set newDyckWord to be our current dyckWord, otherwise keep current dyckWord as my state
 
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
 import numpy as np
 
 import argparse
@@ -226,8 +223,8 @@ def my_project(start_word, mixing_time, sample_interval, num_samples, distributi
     n = len(start_word) / 2
     curr_word = start_word
     # curr_energy = get_arcs_init_energy(len(start_word)/2)
-    for i in range(mixing_time):  # I need my movingWithProb to run mixing_time amount of times (while loop)
-        if i > 0 and i % (mixing_time / 10) == 0:
+    for i in range(1, mixing_time+1):  # I need my movingWithProb to run mixing_time amount of times (while loop)
+        if i > 1 and i % (mixing_time / 10) == 0:
             print('finished {0} of {1} mixing steps'.format(i, mixing_time))
         combined_move(curr_word, distribution)
     samp_count = 0
