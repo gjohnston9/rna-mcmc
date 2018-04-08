@@ -138,7 +138,7 @@ def contact_distances_average(contact_distances):
 def avg_branching(word, root_deg, int_nodes, leaves):
     n = len(word) / 2
     k = 0 if root_deg > 1 else 1
-    return (n - int_nodes - k) / (n + 1.0 - int_nodes - leaves - k)
+    return (n + 1.0 - int_nodes - k) / (n + 2.0 - int_nodes - leaves - k)
 
 
 def height(word):
