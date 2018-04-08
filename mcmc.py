@@ -189,8 +189,23 @@ def ladder_distance(word):
     return max_length + 1
 
 
-# def average_ladder_distance(word):
-
+def average_ladder_distance(word):
+    ones = [(i, char) for i, char in enumerate(word) if char == 1]
+    distances = []
+    for i, start in ones:
+        for _, end in ones[i+1:]:
+            curr_depth = 0
+            min_depth = 0
+            for i, char in enumerate(word[start+1:end+1]):
+                if char == 0:
+                    curr_depth -= 1
+                    min_depth = min(curr_depth, min_depth)
+                else:
+                    curr_depth += 1
+            # distance from start to root of path, plus distance from root to end
+            distance = abs(min_depth) + abs(min_depth - curr_depth)
+            distances.append(abs(min_depth) + abs(min_depth - curr_depth))
+    return sum(distances) / (1.0 * len(distances))
 
 
 def my_project(start_word, mixing_time, sample_interval, num_samples, distribution, base_prefix, base_name):
