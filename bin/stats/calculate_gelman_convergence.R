@@ -11,7 +11,7 @@ plot_at = -1
 
 ### If not plotting anything, make sure to comment out this line.
 ### Otherwise the plot will be overwritten with an empty pdf.
-# pdf('gelman.pdf')
+# pdf('results/gelman.pdf')
 
 n = 1000
 mixingTime = 0
