@@ -187,24 +187,37 @@ def ladder_distance(word):
 
 
 def average_ladder_distance(word):
-    ones = [i for i, char in enumerate(word) if char == 1]
-    distances = []
-    for i, start in enumerate(ones):
-        for end in ones[i+1:]:
-            curr_depth = 0
-            min_depth = 0
-            for char in word[start+1:end+1]:
-                if char == 0:
-                    curr_depth -= 1
-                    min_depth = min(curr_depth, min_depth)
-                else:
-                    curr_depth += 1
-            # distance from start to root of path, plus distance from root to end
-            distance = abs(min_depth) + abs(min_depth - curr_depth)
-            if min_depth == 0:
-                distance += 1
-            distances.append(distance)
-    return sum(distances) / (1.0 * len(distances))
+    """
+    The reasoning behind this algorithm (from Anna):
+    We want to figure out how much each edge contributes to the average
+    ladder distance. That is, we want to compute (the number of paths which
+    use the edge)/M. For any edge e, let S be the subtree below e and
+    including e itself. Observe that any path joining an edge in S to an
+    edge outside of S must pass through edge e. Similarly, any path joining
+    two edges in S or two edges in the complement of S will not use edge e,
+    unless it is a path joining two edges in S that has e as a terminal edge.
+    This case gives us an additional | S | - 1 paths that use e.
+    Therefore, the number of paths that use e is | S | * (n minus | S |) + | S | - 1.
+    """
+    n = len(word) / 2
+    total_paths = (n*(n-1)) / 2
+    # a 1 at position i will be paired with a 0 at position partners[i]
+    partners = [0]*len(word)
+    stack = []
+    for i, char in enumerate(word):
+        if char == 1:
+            stack.append(i)
+        else:
+            partners[stack.pop()] = i
+
+    average_ladder_distance_sum = 0
+    for i, char in enumerate(word):
+        if char == 0:
+            continue
+        s = (partners[i] - i + 1)/2 # number of edges in subtree rooted at this edge, including this edge
+        average_ladder_distance_sum += ((s)*(n - s) + (s - 1)) / (1.0 * total_paths)
+
+    return average_ladder_distance_sum
 
 
 def my_project(start_word, mixing_time, sample_interval, num_samples, distribution, base_prefix, base_name):
