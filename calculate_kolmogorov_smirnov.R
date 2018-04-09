@@ -2,10 +2,10 @@ library(dgof)
 
 n = 1000
 
-stats = c("avg_branching", "cd_sums", "root_degree", "num_leaves", "height")
-samples = c("2-", "1-", "1-", "1-", "1-") # distinguishes between 1- and 2-sample KS test (1-sample is discrete, 2-sample is continuous)
-dirs = c("by_sample", "by_frequency", "by_sample", "by_sample", "by_sample")
-n_vals = c(n, 2*n-1, n, n, n)
+stats = c("cd_averages", "avg_branching", "cd_sums", "root_degree", "num_leaves", "height")
+samples = c("2-", "2-", "1-", "1-", "1-", "1-") # distinguishes between 1- and 2-sample KS test (1-sample is discrete, 2-sample is continuous)
+dirs = c("by_sample", "by_sample", "by_frequency", "by_sample", "by_sample", "by_sample")
+n_vals = c(2*n-1, n, 2*n-1, n, n, n)
 
 mixingTime = 10000000
 sampleInterval = 10000
