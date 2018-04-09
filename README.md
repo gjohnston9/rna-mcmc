@@ -20,11 +20,11 @@
 	- With the `--uniform` flag, you should provide initial mixing time, sample interval, and number of samples as command line arguments, in that order (this order is the same for any script in the project that requires command line arguments). For each characteristic that has an available CDF (height, number of leaves, root degree, and contact distance sums), a text file with two columns (experimental and expected values) will be created in the `data/processed_plot_data` directory.
 	- With the `--nntm` flag, you should first provide uniform initial mixing time, sample interval, and number of samples as command line arguments. Then you should provide these three values used for the run under the nntm distribution. This will create files to the `data/processed_plot_data` directory, comparing experimental values under the nntm distribution to expected values under the uniform distribution. In addition, it will create two files comparing experimental values under the nntm distribution for ladder distance and contact distance averages with the experimental values for these characteristics under the uniform distribution.
 	- Note: The comparison of nntm experimental data to uniform experimental data when the `--nntm` flag is used is the reason that both uniform and nntm parameters are required as command line arguments in that case.
-- After the appropriate data is in the `data/processed_plot_data` directory, use the `plot_results.sage` and `create_histograms.py` scripts to create plots.
-	- `plot_results.sage` creates scatterplots for characteristics that are integer-valued: ladder distance, height, contact distance sums, number of leaves, and root degree.
-	- `create_histograms.py` creates histograms for characteristics that are non-negative and real-valued: average branching and contact distance averages.
+- After the appropriate data is in the `data/processed_plot_data` directory, use the `create_scatterplots.sage` and `create_histograms.py` scripts to create plots.
+	- `create_scatterplots.sage` creates scatterplots for characteristics that are integer-valued: ladder distance, height, contact distance sums, number of leaves, and root degree.
+	- `create_histograms.py` creates histograms for the other characteristics (which are non-negative and real-valued): average branching and contact distance averages.
 	- Both of these scripts save plots to the `plots` directory.
-	- `plot_results.sage` requires as command line arguments *n*, initial mixing time, gap size, and number of samples, followed by one of `--uniform` or `--nntm`.
+	- `create_scatterplots.sage` requires as command line arguments *n*, initial mixing time, gap size, and number of samples, followed by one of `--uniform` or `--nntm`.
 	- `create_histograms.py` requires as command line arguments *n*, uniform initial mixing time, gap size, and number of samples, and nntm initial mixing time, gap size, and number of samples.
 
 ## Calculating statistics
@@ -42,15 +42,15 @@
 
 | Script name  | Inputs | Function | Output |
 | :-----------:  | :------: | :-----: | :-----: |
-| `calculate_cdfs.sage`  | Via command line: value for *n*.   | For each of the characteristics of contact distance sums, number of leaves, root degree, and height, this script writes data to a file in the `expectations` directory. The *n*th line in one of these files gives the probability that under the **uniform** distribution, a sample will have a value less than or equal to *n* for the file's characteristic. | Creates text files named, for example, `num_leaves_n=1000_cdf.txt` in the `expectations` directory. |
-| `generate_polyhedron_vertices.py` | At the top of the file: value for *n*. | For the given value of *n*, creates Dyck word representations of four vertices of the bounding polyhedra, depicted in Figure 3 in page 765 of Hower and Heitsch: Parametric analysis of RNA branching configurations (2011). | Creates text files `v1.txt`, `v2.txt`, `v3.txt`, and `v4.txt` in the `start_words` directory. |
+| `write_cdfs.sage`  | Via command line: value for *n*.   | For each of the characteristics of contact distance sums, number of leaves, root degree, and height, this script writes data to a file in the `expectations` directory. The *n*th line in one of these files gives the probability that under the **uniform** distribution, a sample will have a value less than or equal to *n* for the file's characteristic. | Creates text files named, for example, `num_leaves_n=1000_cdf.txt` in the `expectations` directory. |
+| `write_polyhedron_vertices.py` | At the top of the file: value for *n*. | For the given value of *n*, creates Dyck word representations of four vertices of the bounding polyhedra, depicted in Figure 3 in page 765 of Hower and Heitsch: Parametric analysis of RNA branching configurations (2011). | Creates text files `v1.txt`, `v2.txt`, `v3.txt`, and `v4.txt` in the `start_words` directory. |
 | `write_random_Dyck_words.sage` | Via command line: value for *n*, and number of random words to generate. | Uses Sage's `DyckWord` `random_element()` method to generate random Dyck words of order *n*. | Creates text files named, for example, `random1_n=1000.txt` in the `start_words` directory. |
-| `multiple_runs.sh` | none | Bash script to run `mcmc.py` with the uniform distribution four times, and with the nntm distribution four times. For each distribution, starts once from each of the four vertices written in `generate_polyhedron_vertices.py`. | `mcmc.py` produces output in the `data/by_frequency` and `data/by_sample` directories. All data files generated from this script start with `run1`, `run2`, `run3`, or `run4`. |
+| `multiple_runs.sh` | none | Bash script to run `mcmc.py` with the uniform distribution four times, and with the nntm distribution four times. For each distribution, starts once from each of the four vertices written in `write_polyhedron_vertices.py`. | `mcmc.py` produces output in the `data/by_frequency` and `data/by_sample` directories. All data files generated from this script start with `run1`, `run2`, `run3`, or `run4`. |
 
 ## Experiments
 
 #### Determining  adequate parameters (gap size and initial mixing time) for uniform and nntm distributions
-- `generate_polyhedron_vertices.py`
+- `write_polyhedron_vertices.py`
 	- Generate starting points for the `multiple_runs` script.
 - `multiple_runs.sh`
 	- Run `mcmc.py` with the uniform distribution four times, and with the nntm distribution four times.
@@ -58,16 +58,16 @@
 	- For each "limit" (initial portion of the chain), we see how across-chain variance compares to within-chain variance, giving us an idea of how close the chains are to converging to the same distribution. A value below 1.1 tells us that that limit is an adequate initial mixing time.
 - `calculate_effective_sample_size.R`
 	- For a given limit (number of iterations), for each characteristic we divide number of iterations by effective sample size. Taking the maximum across characteristics tells us what gap size we can use with an initial mixing time equal to the given limit.
-- (optionally) `calculate_cdfs.sage`, then `calculate_kolmogorov_smirnov_averages.R`
+- (optionally) `write_cdfs.sage`, then `calculate_kolmogorov_smirnov_averages.R`
 	- Compares the values obtained under either the uniform or nntm in `multiple_runs`to the expected values under the uniform distribution. This tells us whether we can conclude that the distributions for any of these characteristics significantly differ under the uniform vs. the nntm distributions. A p-value below 0.05 means we can conclude this, but a p-value greater than or equal to 0.05 means we cannot make any conclusion.
 
 #### Using Kolmogorov-Smirnov to find a difference between values for characteristics under uniform and nntm distributions
 - `mcmc.py` under both uniform and nntm distributions
-- `calculate_cdfs.sage` so that we can compare our nntm values with expected values under the uniform distributions, for characteristics that have a CDF available.
+- `write_cdfs.sage` so that we can compare our nntm values with expected values under the uniform distributions, for characteristics that have a CDF available.
 - `calculate_kolmogorov_smirnov.R` to determine whether we can conclude that the distributions for any of these characteristics significantly differ under the uniform vs. the nntm distributions. A p-value below 0.05 means we can conclude this, but a p-value greater than or equal to 0.05 means we cannot make any conclusion.
 
 #### Visually comparing values for characteristics under uniform and nntm distributions
 - `mcmc.py` under both uniform and nntm distributions
-- `calculate_cdfs.sage` so that we can compare our nntm values with expected values under the uniform distributions, for characteristics that have a CDF available.
-- `plot_results.sage` and `create_histograms.py` to generate scatterplots and histograms comparing data from the uniform and nntm distributions.
+- `write_cdfs.sage` so that we can compare our nntm values with expected values under the uniform distributions, for characteristics that have a CDF available.
+- `create_scatterplots.sage` and `create_histograms.py` to generate scatterplots and histograms comparing data from the uniform and nntm distributions.
 
