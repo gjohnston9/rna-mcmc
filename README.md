@@ -68,7 +68,7 @@
 - `calculate_gelman_convegence.R`
 	- For each "limit" (initial portion of the chain), we see how across-chain variance compares to within-chain variance, giving us an idea of how close the chains are to converging to the same distribution. A value below 1.1 tells us that that limit is an adequate initial mixing time.
 - `calculate_effective_sample_size.R`
-	- For a given limit (number of iterations), for each characteristic we divide number of iterations by effective sample size. Taking the maximum across characteristics tells us what gap size we can use with an initial mixing time equal to the given limit.
+	- For a given limit (number of iterations), for each characteristic we divide number of iterations by effective sample size. Taking the minimum across characteristics tells us what gap size we can use with an initial mixing time equal to the given limit.
 - (optionally) `write_cdfs.sage`, then `calculate_kolmogorov_smirnov_averages.R`
 	- Compares the values obtained under either the uniform or nntm in `multiple_runs`to the expected values under the uniform distribution. This tells us whether we can conclude that the distributions for any of these characteristics significantly differ under the uniform vs. the nntm distributions. A p-value below 0.05 means we can conclude this, but a p-value greater than or equal to 0.05 means we cannot make any conclusion.
 
