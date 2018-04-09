@@ -25,12 +25,12 @@ def min_height(n, h):
     return total
 
 
-def write_plot_data(base_name, stat_prefix, expectation_function, args):
+def write_plot_data(base_name, stat_prefix, expectation_function, n, num_samples):
     source_name = os.path.join('data', 'by_frequency', stat_prefix + base_name)
     with open(source_name, 'r') as f:
         experimental_data = list(map(int, f.readlines()))
-    r = args.nntm_num_samples / catalan_number(args.n)
-    expectation_data = [r * expectation_function(args.n, x) for x in range(1, len(experimental_data)+1)]
+    r = num_samples / catalan_number(n)
+    expectation_data = [r * expectation_function(n, x) for x in range(1, len(experimental_data)+1)]
     assert len(expectation_data) == len(experimental_data)
 
     expected_sum = sum(num.n() for num in expectation_data)
@@ -68,28 +68,49 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument('n', type=int, help='value of n to use')
-    parser.add_argument('nntm_mixing_time', type=int)
-    parser.add_argument('nntm_sample_interval', type=int)
-    parser.add_argument('nntm_num_samples', type=int)
 
     parser.add_argument('uniform_mixing_time', type=int)
     parser.add_argument('uniform_sample_interval', type=int)
     parser.add_argument('uniform_num_samples', type=int)
 
+    parser.add_argument('nntm_params', nargs='*', action='store', help='mixing time, sample interval, and number of samples for nntm distribution')
+
+    distribution_selection_group = parser.add_mutually_exclusive_group(required=True)
+    distribution_selection_group.add_argument('--uniform', action='store_true')
+    distribution_selection_group.add_argument('--nntm', action='store_true')
+
     args = parser.parse_args()
 
-    base_input_name = 'n={}_dist=nntm_mixingTime={}_sampleInterval={}_numSamples={}.txt'.format(
-        args.n, args.nntm_mixing_time, args.nntm_sample_interval, args.nntm_num_samples)
-    unif_ladder_distance_input_name = 'n={}_dist=uniform_mixingTime={}_sampleInterval={}_numSamples={}.txt'.format(
+    if args.nntm and len(args.nntm_params) == 0:
+        error_string = ('If producing data for nntm distribution, provide both nntm and uniform parameters. ' +
+            'For characteristics with no available CDF under the uniform distribution, data from a uniform run ' +
+            'with the provided uniform parameters will be used instead.')
+        parser.error(error_string)
+
+    if args.uniform and len(args.nntm_params) != 0:
+        parser.error('If producing data for uniform distribution, do not provide nntm parameters.')
+
+    if args.nntm:
+        args.nntm_mixing_time, args.nntm_sample_interval, args.nntm_num_samples = map(int, args.nntm_params)
+        nntm_input_name = 'n={}_dist=nntm_mixingTime={}_sampleInterval={}_numSamples={}.txt'.format(
+            args.n, args.nntm_mixing_time, args.nntm_sample_interval, args.nntm_num_samples)
+
+    unif_input_name = 'n={}_dist=uniform_mixingTime={}_sampleInterval={}_numSamples={}.txt'.format(
         args.n, args.uniform_mixing_time, args.uniform_sample_interval, args.uniform_num_samples)
 
     min_heights = {h : min_height(args.n, h) for h in range(1, args.n+4)}
     def height(n, h, min_heights=min_heights):
         return min_heights[h] - min_heights[h+1]
 
-    write_plot_data(base_input_name, 'height_', height, args)
-    write_plot_data(base_input_name, 'num_leaves_', leaves, args)
-    write_plot_data(base_input_name, 'root_degree_', root_deg, args)
-    write_plot_data(base_input_name, 'cd_sums_', contacts, args)
-    write_plot_data_experimental(base_input_name, unif_ladder_distance_input_name, 'ladder_distance_', 'by_frequency')
-    write_plot_data_experimental(base_input_name, unif_ladder_distance_input_name, 'cd_averages_', 'by_sample')
+    if (args.nntm):
+        write_plot_data(nntm_input_name, 'height_', height, args.n, args.nntm_num_samples)
+        write_plot_data(nntm_input_name, 'num_leaves_', leaves, args.n, args.nntm_num_samples)
+        write_plot_data(nntm_input_name, 'root_degree_', root_deg, args.n, args.nntm_num_samples)
+        write_plot_data(nntm_input_name, 'cd_sums_', contacts, args.n, args.nntm_num_samples)
+        write_plot_data_experimental(nntm_input_name, unif_input_name, 'ladder_distance_', 'by_frequency')
+        write_plot_data_experimental(nntm_input_name, unif_input_name, 'cd_averages_', 'by_sample')
+    else:
+        write_plot_data(unif_input_name, 'height_', height, args.n, args.uniform_num_samples)
+        write_plot_data(unif_input_name, 'num_leaves_', leaves, args.n, args.uniform_num_samples)
+        write_plot_data(unif_input_name, 'root_degree_', root_deg, args.n, args.uniform_num_samples)
+        write_plot_data(unif_input_name, 'cd_sums_', contacts, args.n, args.uniform_num_samples)

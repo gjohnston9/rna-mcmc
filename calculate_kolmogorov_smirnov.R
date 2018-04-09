@@ -29,7 +29,7 @@ for (j in 1:length(stats)) {
 			stat,
 			n)
 
-		expected_values = scan(expected_values_filename)
+		expected_values = scan(expected_values_filename, quiet=TRUE)
 		x = 1:n_val
 		y = c(0, expected_values)
 		f = stepfun(x, y)
@@ -43,7 +43,6 @@ for (j in 1:length(stats)) {
 			uniform_mixingTime,
 			uniform_sampleInterval,
 			uniform_numSamples)
-		cat(uniform_values_filename)
 		uniform_values = scan(uniform_values_filename, quiet=TRUE)
 	} else {
 		stop("unrecognized KS sample value")
@@ -72,7 +71,6 @@ for (j in 1:length(stats)) {
 	if (sample == "1-") {
 		ks_results = dgof::ks.test(actual_values, f)
 	} else {
-		cat(actual_values_filename)
 		ks_results = stats::ks.test(actual_values, uniform_values)
 	}
 

@@ -1,7 +1,7 @@
 library(dgof)
 
-# stats = c("root_degree", "num_leaves", "height")
-stats = c("root_degree")
+stats = c("root_degree", "num_leaves", "height")
+# limits = c(1000, 10000, 100000, 500000, 1000000, 10000000)
 limits = c(1000, 10000, 100000, 500000, 1000000)
 
 # sample sizes (calculated in previous script) for each characteristic for each subset of data
@@ -11,12 +11,12 @@ height = c(2, 12, 99, 529, 1062)
 sampleSizes = data.frame(root_degree, num_leaves, height)
 
 num_runs = 4 # number of runs to average across
+distribution = "uniform" # nntm or uniform
 
 n = 1000
-
 mixingTime = 0
 sampleInterval = 1
-numSamples = 1000000
+numSamples = 10000000
 
 sub_sampled = FALSE ### TODO: give the option to use subsampled data (generated with a gap size of >0),
 ### obviating the section of code that subsamples the actual_values variable below
@@ -42,17 +42,18 @@ for (stat in stats) {
 		limit = limits[i]
 		sampleSize = sampleSizes[i, stat]
 
-		print(sprintf("calculating KS for %s with n=%d, using %d samples", stat, n, limit))
+		print(sprintf("calculating KS for %s with n=%d, using %d samples obtained under the %s distribution", stat, n, limit, distribution))
 		ks_statistic_vals = c()
 		ks_p_vals = c()
 		# cvm_statistic_vals = c()
 		# cvm_p_vals = c()
 		for (run in 1:num_runs) {
 			actual_values_filename = sprintf(
-				"data/by_sample/run%d_%s_n=%d_dist=uniform_mixingTime=%d_sampleInterval=%d_numSamples=%d.txt",
+				"data/by_sample/run%d_%s_n=%d_dist=%s_mixingTime=%d_sampleInterval=%d_numSamples=%d.txt",
 				run,
 				stat,
 				n,
+				distribution,
 				mixingTime,
 				sampleInterval,
 				numSamples)
@@ -73,7 +74,7 @@ for (stat in stats) {
 		}
 
 		cat(sprintf(
-		 	"KS statistic:\n%f\n\nKS p-value:\n%f\n\n",
+			"mean KS statistic:\n%f\n\nmean KS p-value:\n%f\n\n",
 		 	mean(ks_statistic_vals),
 		 	mean(ks_p_vals)))
 

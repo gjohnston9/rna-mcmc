@@ -1,15 +1,16 @@
 library(coda)
 
-# stats = c("root_degree", "num_leaves", "height")
-stats = c("root_degree")
+stats = c("root_degree", "num_leaves", "height")
 
+# limits = c(1000, 10000, 100000, 500000, 1000000, 10000000) ### can take a while when using all 10,000,000 samples
 limits = c(1000, 10000, 100000, 500000, 1000000)
-num_runs = 4
 
 n = 1000
 mixingTime = 0
 sampleInterval = 1
-numSamples = 1000000
+numSamples = 10000000
+
+num_runs = 4
 
 stopifnot(all(limits <= numSamples))
 
@@ -30,11 +31,11 @@ for (stat in stats)
 				sampleInterval,
 				numSamples)
 
-			my_data = scan(filename, nmax=limit)
+			my_data = scan(filename, nmax=limit, quiet=TRUE)
 			my_ess = effectiveSize(my_data) 
 			vals = append(vals, my_ess)
 		}
 
-		cat(sprintf("mean=%.0f\nstd_dev=%.0f\n", mean(vals), sd(vals)))
+		cat(sprintf("mean: %.0f\nstandard deviation: %.0f\n", mean(vals), sd(vals)))
 	}
 }
