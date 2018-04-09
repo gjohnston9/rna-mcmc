@@ -187,13 +187,13 @@ def ladder_distance(word):
 
 
 def average_ladder_distance(word):
-    ones = [(i, char) for i, char in enumerate(word) if char == 1]
+    ones = [i for i, char in enumerate(word) if char == 1]
     distances = []
-    for i, start in ones:
-        for _, end in ones[i+1:]:
+    for i, start in enumerate(ones):
+        for end in ones[i+1:]:
             curr_depth = 0
             min_depth = 0
-            for i, char in enumerate(word[start+1:end+1]):
+            for char in word[start+1:end+1]:
                 if char == 0:
                     curr_depth -= 1
                     min_depth = min(curr_depth, min_depth)
@@ -201,7 +201,9 @@ def average_ladder_distance(word):
                     curr_depth += 1
             # distance from start to root of path, plus distance from root to end
             distance = abs(min_depth) + abs(min_depth - curr_depth)
-            distances.append(abs(min_depth) + abs(min_depth - curr_depth))
+            if min_depth == 0:
+                distance += 1
+            distances.append(distance)
     return sum(distances) / (1.0 * len(distances))
 
 
@@ -243,6 +245,7 @@ def my_project(start_word, mixing_time, sample_interval, num_samples, distributi
     ladder_distance_values = []
     branching_values = []
     cd_averages_values = []
+    average_ladder_distance_values = []
 
     batch_size = min(int(1e6), int(num_samples / 10))
     assert num_samples % batch_size == 0 ### don't want to discard any samples
@@ -265,13 +268,14 @@ def my_project(start_word, mixing_time, sample_interval, num_samples, distributi
             branching = avg_branching(curr_word, degree, int_nodes, leaves)
             cds = contact_distances(curr_word)
             cd_averages = contact_distances_average(cds)
+            avg_ladder_distance = average_ladder_distance(curr_word)
 
             ### update frequencies
             num_leaves_frequency[leaves-1] += 1
             root_degree_frequency[degree-1] += 1
             height_frequency[tree_height-1] += 1
             ladder_distance_frequency[distance-1] += 1
-            # no frequency for avg branching since it's a float
+            # no frequency for avg branching, cd_averages or avg_ladder_distance since they are floats
             cd_sums = map(add, cd_sums, cds)
 
             ### update values
@@ -281,6 +285,7 @@ def my_project(start_word, mixing_time, sample_interval, num_samples, distributi
             ladder_distance_values.append(distance)
             branching_values.append(branching)
             cd_averages_values.append(cd_averages)
+            average_ladder_distance_values.append(avg_ladder_distance)
 
             step_count = 0
             samp_count += 1
@@ -293,7 +298,8 @@ def my_project(start_word, mixing_time, sample_interval, num_samples, distributi
                     (height_values, 'height_'),
                     (ladder_distance_values, 'ladder_distance_'),
                     (branching_values, 'avg_branching_'),
-                    (cd_averages_values, 'cd_averages_')):
+                    (cd_averages_values, 'cd_averages_'),
+                    (average_ladder_distance_values, 'avg_ladder_distance_')):
 
                     filename = os.path.join('data', 'by_sample', base_prefix + type_prefix + base_name)
                     print('saving {0} to {1}'.format(type_prefix[:-1], filename))
@@ -306,6 +312,7 @@ def my_project(start_word, mixing_time, sample_interval, num_samples, distributi
                 ladder_distance_values = []
                 branching_values = []
                 cd_averages_values = []
+                average_ladder_distance_values = []
 
                 file_open_mode = 'a' # for the rest of the runs, append instead of overwriting files
         else:
