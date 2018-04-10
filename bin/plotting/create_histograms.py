@@ -81,3 +81,9 @@ if __name__ == '__main__':
 		(unif.mixingTime, unif.sampleInterval, unif.numSamples),
 		(nntm.mixingTime, nntm.sampleInterval, nntm.numSamples))
 
+	create_histogram(
+		'average ladder distance',
+		'avg_ladder_distance_',
+		n,
+		(100000, 1000, 10000),
+		(1000000, 10000, 10000))
