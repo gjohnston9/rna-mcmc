@@ -12,7 +12,7 @@
 	- The [dgof](https://cran.r-project.org/web/packages/dgof/index.html) package for `calculate_kolmogorov_smirnov.R` and `calculate_kolmogorov_smirnov_averages.R`
 ## Organization
 - Scripts are organized into four directories within the `bin` directory:
-	- `io`: Scripts that only write text data to some other directory (and reading in data from another directory first, in the case of `write_plot_data.sage`)
+	- `io`: Scripts that only write text data to some other directory (and read in data from another directory first, in the case of `write_plot_data.sage`)
 	- `main`: Core scripts for running or testing the simulation.
 	- `plotting`: Scripts for generating plots.
 	- `stats`: Scripts for calculating various statistics (effective sample size, Gelman-Rubin convergence diagnostic, and Kolmogorov-Smirnov for testing the equality of two probability distributions).
