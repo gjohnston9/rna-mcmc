@@ -34,9 +34,8 @@ def create_histogram(characteristic_name, characteristic_prefix, n, unif_params,
 		nntm_mixingTime, nntm_sampleInterval, nntm_numSamples)
 	save_name = os.path.join('plots', save_name)
 
-
-	uniform = [math.log(x) for x in uniform]
-	nntm = [math.log(x) for x in nntm]
+	# uniform = [math.log(x) for x in uniform]
+	# nntm = [math.log(x) for x in nntm]
 
 	min_x = min(min(uniform), min(nntm))
 	max_x = max(max(uniform), max(nntm))
@@ -54,7 +53,7 @@ def create_histogram(characteristic_name, characteristic_prefix, n, unif_params,
 	ax.set(
 		title='Comparison between {} under\nuniform and thermodynamic distributions'.format(characteristic_name),
 		xlabel=characteristic_name,
-		ylabel='log of frequency')
+		ylabel='frequency')
 	ax.legend(loc='upper center', bbox_to_anchor=(0., -0.22, 1., .102), fancybox=False, shadow=False)
 	plt.gcf().subplots_adjust(bottom=0.22)
 	print('saving {} to {}'.format(characteristic_name, save_name))
