@@ -16,6 +16,20 @@ uniform_mixingTime = 100000
 uniform_sampleInterval = 1000
 uniform_numSamples = 10000
 
+# set this to FALSE to use nntm data files that don't have any energy parameters in the filename
+# set it to FALSE to look for energy parameters in the nntm data filenames
+use_energy = FALSE
+c1 = 2.3
+c2 = 1.3
+c3 = -0.4
+c4 = -14.6
+
+if (use_energy == FALSE) {
+	energySuffix = ""
+} else {
+	energySuffix = sprintf("_%f_%f_%f_%f", c1, c2, c3, c4)
+}
+
 for (j in 1:length(stats)) {
 	stat = stats[j]
 	n_val = n_vals[j]
@@ -53,13 +67,14 @@ for (j in 1:length(stats)) {
 	ks_p_vals = c()
 	
 	actual_values_filename = sprintf(
-		"data/%s/%s_n=%d_dist=nntm_mixingTime=%d_sampleInterval=%d_numSamples=%d.txt",
+		"data/%s/%s_n=%d_dist=nntm_mixingTime=%d_sampleInterval=%d_numSamples=%d%s.txt",
 		dir,
 		stat,
 		n,
 		mixingTime,
 		sampleInterval,
-		numSamples)
+		numSamples,
+		energySuffix)
 
 	actual_values = scan(actual_values_filename, quiet=TRUE)
 
