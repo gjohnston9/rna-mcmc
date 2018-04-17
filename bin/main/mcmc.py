@@ -40,11 +40,11 @@ def swap(arr, posA, posB):
     arr[posA], arr[posB] = arr[posB], arr[posA]
 
 
-def combined_move(curr_word, distribution):
+def combined_move(curr_word, distribution, c1, c2, c3, c4):
     length = len(curr_word)
     
     if distribution == 'nntm':
-        old_energy = calculate_energy(curr_word)
+        old_energy = calculate_energy(curr_word, c1, c2, c3, c4)
 
     posA = random.randrange(0, length)
     posB = random.randrange(0, length)
@@ -58,7 +58,7 @@ def combined_move(curr_word, distribution):
         return
 
     if distribution == 'nntm':
-        new_energy = calculate_energy(curr_word) # calculates energy
+        new_energy = calculate_energy(curr_word, c1, c2, c3, c4) # calculates energy
         probability = min(1, np.exp(old_energy-new_energy)) # MCMC part
         assert probability > 0
         ran = random.random()
@@ -104,13 +104,14 @@ def calculate_useful_characteristics(word):
     }
 
 
-def calculate_energy(word):
+def calculate_energy(word, c1, c2, c3, c4):
     characteristics = calculate_useful_characteristics(word)
     degree = characteristics['degree']
     leaves = characteristics['leaves']
     int_nodes = characteristics['int_nodes']
     num_edges = characteristics['num_edges']
-    return (-.4*degree + 2.3*leaves +1.3*int_nodes) - .1*num_edges
+    # return (-.4*degree + 2.3*leaves +1.3*int_nodes) - .1*num_edges
+    return (c3*degree + c1*leaves + c2*int_nodes) + c4*num_edges
 
 
 def contact_distances(word): # For any dyck word, returns the contact distances of the corresponding matching
@@ -222,7 +223,7 @@ def average_ladder_distance(word):
     return average_ladder_distance_sum
 
 
-def my_project(start_word, mixing_time, sample_interval, num_samples, distribution, base_prefix, base_name):
+def my_project(start_word, mixing_time, sample_interval, num_samples, distribution, base_prefix, base_name, c1, c2, c3, c4):
     """
     start_word: word to start with
     mixing_time: t
@@ -243,7 +244,7 @@ def my_project(start_word, mixing_time, sample_interval, num_samples, distributi
     for i in range(1, mixing_time+1):  # I need my movingWithProb to run mixing_time amount of times (while loop)
         if i > 1 and i % (mixing_time / 10) == 0:
             print('finished {0} of {1} mixing steps'.format(i, mixing_time))
-        combined_move(curr_word, distribution)
+        combined_move(curr_word, distribution, c1, c2, c3, c4)
     samp_count = 0
     step_count = 0
     checkpoint = int(num_samples / 10)
@@ -331,7 +332,7 @@ def my_project(start_word, mixing_time, sample_interval, num_samples, distributi
 
                 file_open_mode = 'a' # for the rest of the runs, append instead of overwriting files
         else:
-            combined_move(curr_word, distribution)
+            combined_move(curr_word, distribution, c1, c2, c3, c4)
             step_count += 1
     return {
         'cd_sums' : cd_sums,
@@ -365,6 +366,15 @@ if __name__ == '__main__':
     parser.add_argument('--start_word_source', type=str, default=None, help='path to file containing ' \
         + 'the starting word to be used (the default start word is [1]*n + [0]*n)')
 
+    energy_defaults = [2.3, 1.3, -0.4, -14.6]
+    parser.add_argument('--c1', type=float, default=None, required=False, help='c1 parameter for energy function')
+    parser.add_argument('--c2', type=float, default=None, required=False, help='c2 parameter for energy function')
+    parser.add_argument('--c3', type=float, default=None, required=False, help='c3 parameter for energy function')
+    parser.add_argument('--c4', type=float, default=None, required=False, help='c4 parameter for energy function')
+
+    parser.add_argument('--no_energy_in_filename', action='store_true',
+        help='set to true to exclude energy parameters from filename, for compatitibility with plotting scripts and some statistics scripts')
+
     args = parser.parse_args()
 
     if args.uniform:
@@ -372,17 +382,41 @@ if __name__ == '__main__':
     else:
         distribution = 'nntm'
 
+    energy_params_provided = [val != None for val in (args.c1, args.c2, args.c3, args.c4)]
+    assert all(energy_params_provided) or not any(energy_params_provided), "Must specify all energy parameters or none"
+    if all(energy_params_provided):
+        assert args.nntm, "Don't specify energy parameters when using uniform distribution"
+    elif args.nntm and not any(energy_params_provided):
+        print("using default energy parameters")
+        args.c1, args.c2, args.c3, args.c4 = energy_defaults
+
     if args.start_word_source is not None:
         with open(args.start_word_source, 'r') as f:
             start_word = list(map(int, f.readline().strip()))
     else:
         start_word = [1] * args.n + [0] * args.n
 
-    base_name = 'n={0}_dist={1}_mixingTime={2}_sampleInterval={3}_numSamples={4}.txt'.format(
-        args.n, distribution, args.mixing_time, args.sample_interval, args.num_samples)
+    if args.no_energy_in_filename:
+        assert args.nntm, "No energy parameters are included in the filename when using the uniform distribution"
+        print("excluding energy parameters from filename")
+
+    if args.uniform or args.no_energy_in_filename:
+        energy_suffix = ''
+    else:
+        energy_suffix = '_{0}_{1}_{2}_{3}'.format(args.c1, args.c2, args.c3, args.c4)
+
+    base_name = 'n={0}_dist={1}_mixingTime={2}_sampleInterval={3}_numSamples={4}{5}.txt'.format(
+        args.n, distribution, args.mixing_time, args.sample_interval, args.num_samples, energy_suffix)
 
     start_time = time.time()
-    results = my_project(start_word, args.mixing_time, args.sample_interval, args.num_samples, distribution, args.prefix, base_name)
+    results = my_project(
+        start_word,
+        args.mixing_time, args.sample_interval, args.num_samples,
+        distribution,
+        args.prefix,
+        base_name,
+        args.c1, args.c2, args.c3, args.c4)
+
     end_time = time.time()
     print('Elapsed time was {0:.0f} seconds.'.format(end_time - start_time))
     
