@@ -5,18 +5,23 @@
 	- NumPy to run `mcmc.py`
 	- PyPy is not required, but in my experience it has led to a speedup of 5-10x over CPython (the default implementation of Python)
 	- Matplotlib and NumPy to run `create_histograms.py`
+
 - Sage
 	- 7.6+, but earlier versions should work too
+
 - R
 	- The [coda](https://cran.r-project.org/web/packages/coda/index.html) package for `calculate_effective_sample_size.R` and `calculate_gelman_convergence.R`.
 	- The [dgof](https://cran.r-project.org/web/packages/dgof/index.html) package for `calculate_kolmogorov_smirnov.R` and `calculate_kolmogorov_smirnov_averages.R`
+
 ## Organization
 - Scripts are organized into four directories within the `bin` directory:
 	- `io`: Scripts that only write text data to some other directory (and read in data from another directory first, in the case of `write_plot_data.sage`)
 	- `main`: Core scripts for running or testing the simulation.
 	- `plotting`: Scripts for generating plots.
 	- `stats`: Scripts for calculating various statistics (effective sample size, Gelman-Rubin convergence diagnostic, and Kolmogorov-Smirnov for testing the equality of two probability distributions).
+
 - Scripts should be run from the top-level directory (the one where this README is located) so that they produce their outputs in the right places.
+
 - The `data` directory has three subdirectories:
 	- `by_frequency`: Contains information about the frequency with which each characteristic had a certain value during an MCMC run. This is generated at the end of `mcmc.py` and is used for creating plots.
 	- `by_sample`: Each file in this directory corresponds to a certain characteristic during a single MCMC run. Each line gives one sample's value for a characteristic.
@@ -24,9 +29,13 @@
 
 ## Running the chain
 - `mcmc.py` requires four positional arguments: *n*, initial mixing time, gap size (number of moves to make before recording each sample), and number of samples. It also requires either the `--uniform` or `--nntm` flag to specify which distribution to use when making each move.
+
 - If using `--nntm`, you may also specify parameters for the energy function. The default values are 2.3, 1.3, -0.4, and -14.6. To specify these parameters, you should use the flags `--c1` through `--c4`, e.g. `--c1 -0.9 --c2 -1.8 --c3 -1.7 --c4 -8.8`. Either all or none of these parameters need to be specified, to guard against user error.
+
 - Use the `--no_energy_in_filename` flag when running `mcmc.py` to exclude the energy parameters from the filename. This will make the filenames of the generated data compatible with old scripts (plotting of characteristics and statistics including Gelman-Rubin and Kolmogorov-Smirnov).
+
 - Each time 10% of the total number of samples has been collected, the program will print a message and append per-sample data for each characteristic to files in the `data/by_sample` directory. This is done to reduce memory usage of the program since after writing these values, they can be discarded.
+
 - After the program finishes, data about frequencies of characteristics (how many times each characteristic had a certain value) is written to the `data/by_frequency` directory.
 
 ## Creating plots
@@ -35,6 +44,7 @@
 	- With the `--uniform` flag, you should provide initial mixing time, sample interval, and number of samples as command line arguments, in that order (this order is the same for any script in the project that requires command line arguments). For each characteristic that has an available CDF (height, number of leaves, root degree, and contact distance sums), a text file with two columns (experimental and expected values) will be created in the `data/processed_plot_data` directory.
 	- With the `--nntm` flag, you should first provide uniform initial mixing time, sample interval, and number of samples as command line arguments. Then you should provide these three values used for the run under the nntm distribution. This will create files in the `data/processed_plot_data` directory, comparing experimental values under the nntm distribution to expected values under the uniform distribution. In addition, it will create two files comparing experimental values under the nntm distribution for ladder distance and contact distance averages with the experimental values for these characteristics under the uniform distribution.
 	- Note: The comparison of nntm experimental data to uniform experimental data when using the `--nntm` flag is the reason that both uniform and nntm parameters are required as command line arguments in that case.
+
 - After the appropriate data is in the `data/processed_plot_data` directory, use the `create_scatterplots.sage` and `create_histograms.py` scripts to create plots.
 	- `create_scatterplots.sage` creates scatterplots for characteristics that are integer-valued: ladder distance, height, contact distance sums, number of leaves, and root degree.
 	- `create_histograms.py` creates histograms for the other characteristics (which are non-negative and real-valued): average branching and contact distance averages.
@@ -67,22 +77,30 @@
 #### Determining  adequate parameters (gap size and initial mixing time) for uniform and nntm distributions
 - `write_polyhedron_vertices.py`
 	- Generate starting points for the `multiple_runs` script.
+
 - `multiple_runs.sh`
 	- Run `mcmc.py` with the uniform distribution four times, and with the nntm distribution four times.
+
 - `calculate_gelman_convegence.R`
 	- For each "limit" (initial portion of the chain), we see how across-chain variance compares to within-chain variance, giving us an idea of how close the chains are to converging to the same distribution. A value below 1.1 tells us that that limit is an adequate initial mixing time.
+
 - `calculate_effective_sample_size.R`
 	- For a given limit (number of iterations), for each characteristic we divide number of iterations by effective sample size. Taking the minimum across characteristics tells us what gap size we can use with an initial mixing time equal to the given limit.
+
 - (optionally) `write_cdfs.sage`, then `calculate_kolmogorov_smirnov_averages.R`
 	- Compares the values obtained under either the uniform or nntm in `multiple_runs`to the expected values under the uniform distribution. This tells us whether we can conclude that the distributions for any of these characteristics significantly differ under the uniform vs. the nntm distributions. A p-value below 0.05 means we can conclude this, but a p-value greater than or equal to 0.05 means we cannot make any conclusion.
 
 #### Using Kolmogorov-Smirnov to find a difference between values for characteristics under uniform and nntm distributions
 - `mcmc.py` under both uniform and nntm distributions
+
 - `write_cdfs.sage` so that we can compare our nntm values with expected values under the uniform distributions, for characteristics that have a CDF available.
+
 - `calculate_kolmogorov_smirnov.R` to determine whether we can conclude that the distributions for any of these characteristics significantly differ under the uniform vs. the nntm distributions. A p-value below 0.05 means we can conclude this, but a p-value greater than or equal to 0.05 means we cannot make any conclusion.
 
 #### Visually comparing values for characteristics under uniform and nntm distributions
 - `mcmc.py` under both uniform and nntm distributions
+
 - `write_cdfs.sage` so that we can compare our nntm values with expected values under the uniform distributions, for characteristics that have a CDF available.
+
 - `create_scatterplots.sage` and `create_histograms.py` to generate scatterplots and histograms comparing data from the uniform and nntm distributions.
 
