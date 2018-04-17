@@ -7,8 +7,6 @@
     # Compute chanceOfMove=min (1, exp(-new_word)/exp(-curr_word)) <---- this is MCMC
     # with prob chanceOfMove, set newDyckWord to be our current dyckWord, otherwise keep current dyckWord as my state
 
-import numpy as np
-
 import argparse
 import math
 import os
@@ -59,7 +57,7 @@ def combined_move(curr_word, distribution, c1, c2, c3, c4):
 
     if distribution == 'nntm':
         new_energy = calculate_energy(curr_word, c1, c2, c3, c4) # calculates energy
-        probability = min(1, np.exp(old_energy-new_energy)) # MCMC part
+        probability = min(1, math.exp(old_energy-new_energy)) # MCMC part
         assert probability > 0
         ran = random.random()
         if ran <= probability: # leave new dyck_word as current state
@@ -250,10 +248,10 @@ def my_project(start_word, mixing_time, sample_interval, num_samples, distributi
     checkpoint = int(num_samples / 10)
 
     cd_sums = [0] * (2 * n)
-    num_leaves_frequency = np.zeros(n, dtype='uint32')
-    root_degree_frequency = np.zeros(n, dtype='uint32')
-    height_frequency = np.zeros(n, dtype='uint32')
-    ladder_distance_frequency = np.zeros(n, dtype='uint32')
+    num_leaves_frequency = [0]*n
+    root_degree_frequency = [0]*n
+    height_frequency = [0]*n
+    ladder_distance_frequency = [0]*n
 
     num_leaves_values = []
     root_degree_values = []
@@ -344,8 +342,6 @@ def my_project(start_word, mixing_time, sample_interval, num_samples, distributi
 
 
 if __name__ == '__main__':
-    np.seterr('raise')
-
     parser = argparse.ArgumentParser()
     parser.add_argument('n', type=int, help='value of n to use')
     parser.add_argument('mixing_time', type=int,
@@ -422,7 +418,7 @@ if __name__ == '__main__':
     
     ### np ndarrays
     cd_sums = results['cd_sums']
-    cd_sums = np.asarray(list(cd_sums))
+    cd_sums = list(cd_sums)
     num_leaves_frequency = results['num_leaves']
     root_degree_frequency = results['root_degree']
     height_frequency = results['height']
@@ -438,4 +434,6 @@ if __name__ == '__main__':
         filename = args.prefix + prefix + base_name
         filepath = os.path.join('data', 'by_frequency', filename)
         print('saving {0} to data/by_frequency/'.format(filepath))
-        np.savetxt(filepath, array, fmt='%d')
+        with open(filepath, 'w') as f:
+            for item in array:
+                f.write('{0}\n'.format(item))

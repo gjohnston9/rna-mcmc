@@ -2,7 +2,6 @@
 ## Dependencies
 - Python
 	- 2.6+
-	- NumPy to run `mcmc.py`
 	- PyPy is not required, but in my experience it has led to a speedup of 5-10x over CPython (the default implementation of Python)
 	- Matplotlib and NumPy to run `create_histograms.py`
 
