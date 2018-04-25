@@ -18,6 +18,10 @@ import timeit
 from operator import add
 
 
+class UnderflowException(Exception):
+    pass
+
+
 def is_valid(dyck_word, end):
     """
     this function checks for valid dyck_words/ballot sequences, ignoring letters past the `end` index
@@ -40,7 +44,7 @@ def swap(arr, posA, posB):
 
 def combined_move(curr_word, distribution, c1, c2, c3, c4):
     length = len(curr_word)
-    
+
     if distribution == 'nntm':
         old_energy = calculate_energy(curr_word, c1, c2, c3, c4)
 
@@ -58,12 +62,14 @@ def combined_move(curr_word, distribution, c1, c2, c3, c4):
     if distribution == 'nntm':
         new_energy = calculate_energy(curr_word, c1, c2, c3, c4) # calculates energy
         probability = min(1, math.exp(old_energy-new_energy)) # MCMC part
-        assert probability > 0
         ran = random.random()
         if ran <= probability: # leave new dyck_word as current state
-            return
+            pass
         else: # revert to old dyck_word
             swap(curr_word, posA, posB) # curr_arcs is now new_word
+
+        if (probability <= 0):
+            raise UnderflowException
 
 
 def calculate_useful_characteristics(word):
@@ -236,13 +242,17 @@ def my_project(start_word, mixing_time, sample_interval, num_samples, distributi
         sample_interval,
         num_samples))
 
+    num_probability_underflows = 0
     n = len(start_word) / 2
     curr_word = start_word
     # curr_energy = get_arcs_init_energy(len(start_word)/2)
     for i in range(1, mixing_time+1):  # I need my movingWithProb to run mixing_time amount of times (while loop)
         if i > 1 and i % (mixing_time / 10) == 0:
             print('finished {0} of {1} mixing steps'.format(i, mixing_time))
-        combined_move(curr_word, distribution, c1, c2, c3, c4)
+        try:
+            combined_move(curr_word, distribution, c1, c2, c3, c4)
+        except UnderflowException:
+            num_probability_underflows += 1
     samp_count = 0
     step_count = 0
     checkpoint = int(num_samples / 10)
@@ -330,8 +340,17 @@ def my_project(start_word, mixing_time, sample_interval, num_samples, distributi
 
                 file_open_mode = 'a' # for the rest of the runs, append instead of overwriting files
         else:
-            combined_move(curr_word, distribution, c1, c2, c3, c4)
+            try:
+                combined_move(curr_word, distribution, c1, c2, c3, c4)
+            except UnderflowException:
+                num_probability_underflows += 1
             step_count += 1
+    total_moves = mixing_time + num_samples
+    underflow_percent = (100.0 * num_probability_underflows) / total_moves
+    print("there were {0} instances of underflow when calculating move probabilities, out of a total of {1} moves".format(
+        num_probability_underflows, total_moves))
+    print("underflows happened in about {0:.2f}% of moves".format(underflow_percent))
+
     return {
         'cd_sums' : cd_sums,
         'num_leaves' : num_leaves_frequency,
