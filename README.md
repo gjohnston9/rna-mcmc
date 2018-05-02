@@ -104,6 +104,7 @@
 	- Runs `mcmc.py` four times with this new energy function.
 - `bin/stats/calculate_gelman_convergence_new_energy_function.R`
 - `bin/stats/calculate_effective_sample_size_new_energy_function.R`
+	- I updated this script to look at ladder distance, contact distance averages, and average branching in addition to root degree, number of leaves, and height. But when running the updated version, the process keeps getting killed after a few minutes. So if this happens to you, remove those new characteristics from the list at the top of the file.
 
 #### Using Kolmogorov-Smirnov to find a difference between values for characteristics under uniform and nntm distributions
 - `bin/main/mcmc.py` under both uniform and nntm distributions
