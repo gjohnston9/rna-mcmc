@@ -1,12 +1,12 @@
 library(coda)
 
-stats = c("root_degree", "num_leaves", "height")
+stats = c("root_degree", "num_leaves", "height", "ladder_distance", "cd_averages", "avg_branching")
 limits = seq(from=5e6, to=40e6, by=5e6)
 
 n = 1000
 mixingTime = 0
 sampleInterval = 1
-numSamples = 40000000
+numSamples = 40e6
 
 num_runs = 4
 
@@ -28,6 +28,8 @@ for (limit in limits) {
 				numSamples)
 
 			my_data = scan(filename, nmax=limit, quiet=TRUE)
+			stopifnot(length(my_data) != limit)
+
 			my_ess = effectiveSize(my_data) 
 			vals = append(vals, my_ess)
 		}
