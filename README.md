@@ -73,16 +73,18 @@
 | `write_cdfs.sage`  | Via command line: value for *n*.   | For each of the characteristics of contact distance sums, number of leaves, root degree, and height, this script writes data to a file in the `expectations` directory. The *n*th line in one of these files gives the probability that under the **uniform** distribution, a sample will have a value less than or equal to *n* for the file's characteristic. | Creates text files named, for example, `num_leaves_n=1000_cdf.txt` in the `expectations` directory. |
 | `write_polyhedron_vertices.py` | At the top of the file: value for *n*. | For the given value of *n*, creates Dyck word representations of four vertices of the bounding polyhedra, depicted in Figure 3 in page 765 of Hower and Heitsch: Parametric analysis of RNA branching configurations (2011). | Creates text files `v1.txt`, `v2.txt`, `v3.txt`, and `v4.txt` in the `start_words` directory. |
 | `write_random_Dyck_words.sage` | Via command line: value for *n*, and number of random words to generate. | Uses Sage's `DyckWord` `random_element()` method to generate random Dyck words of order *n*. | Creates text files named, for example, `random1_n=1000.txt` in the `start_words` directory. |
-| `multiple_runs.sh` | none | Bash script to run `mcmc.py` with the uniform distribution four times, and with the nntm distribution four times. For each distribution, starts once from each of the four vertices written in `write_polyhedron_vertices.py`. | `mcmc.py` produces output in the `data/by_frequency` and `data/by_sample` directories. All data files generated from this script start with `run1`, `run2`, `run3`, or `run4`. |
+| `original_energy_function_calibration_runs.sh` | none | Bash script to run `mcmc.py` with the uniform distribution four times, and with the nntm distribution four times. For each distribution, starts once from each of the four vertices written in `write_polyhedron_vertices.py`. | `mcmc.py` produces output in the `data/by_frequency` and `data/by_sample` directories. All data files generated from this script start with `run1`, `run2`, `run3`, or `run4`. |
+| `new_energy_function_calibration_runs.sh` | none | Same function as the previous script, 
+| `multiple_energy_functions_sample_data_runs.sh` | none | Runs `mcmc.py` to collect a small amount of data using multiple energy functions, so that you can start experimenting with plotting this data. | Files in `data/by_frequency` and `data/by_sample` with data from runs under the different energy functions. |
 
 ## Experiments
 
-#### Determining  adequate parameters (gap size and initial mixing time) for uniform and nntm distributions
+#### Determining adequate parameters (gap size and initial mixing time) for uniform and nntm distributions
 - `write_polyhedron_vertices.py`
-	- Generate starting points for the `multiple_runs` script.
+	- Generates starting points for the `original_energy_function_calibration_runs` script.
 
-- `multiple_runs.sh`
-	- Run `mcmc.py` with the uniform distribution four times, and with the nntm distribution four times.
+- `original_energy_function_calibration_runs.sh`
+	- Runs `mcmc.py` with the uniform distribution four times, and with the nntm distribution four times.
 
 - `calculate_gelman_convegence.R`
 	- For each "limit" (initial portion of the chain), we see how across-chain variance compares to within-chain variance, giving us an idea of how close the chains are to converging to the same distribution. A value below 1.1 tells us that that limit is an adequate initial mixing time.
@@ -91,7 +93,16 @@
 	- For a given limit (number of iterations), for each characteristic we divide number of iterations by effective sample size. Taking the minimum across characteristics tells us what gap size we can use with an initial mixing time equal to the given limit.
 
 - (optionally) `write_cdfs.sage`, then `calculate_kolmogorov_smirnov_averages.R`
-	- Compares the values obtained under either the uniform or nntm in `multiple_runs`to the expected values under the uniform distribution. This tells us whether we can conclude that the distributions for any of these characteristics significantly differ under the uniform vs. the nntm distributions. A p-value below 0.05 means we can conclude this, but a p-value greater than or equal to 0.05 means we cannot make any conclusion.
+	- Compares the values obtained under either the uniform or nntm in `original_energy_function_calibration_runs`to the expected values under the uniform distribution. This tells us whether we can conclude that the distributions for any of these characteristics significantly differ under the uniform vs. the nntm distributions. A p-value below 0.05 means we can conclude this, but a p-value greater than or equal to 0.05 means we cannot make any conclusion.
+
+#### Determining mixing parameters for nntm distribution in the worst case, which we expect to lead to the slowest mixing times.
+- This is similar to the previous experiment, but uses nntm parameters -0.9, -1.8, -1.7, and -8.8.
+- See the previous experiment for a more detailed description of each step.
+- `write_polyhedron_vertices.py`
+- `new_energy_function_calibration_runs.sh`
+	- Runs `mcmc.py` four times with this new energy function.
+- `calculate_gelman_convergence_new_energy_function.R`
+- `calculate_effective_sample_size_new_energy_function.R`
 
 #### Using Kolmogorov-Smirnov to find a difference between values for characteristics under uniform and nntm distributions
 - `mcmc.py` under both uniform and nntm distributions
@@ -106,4 +117,3 @@
 - `write_cdfs.sage` so that we can compare our nntm values with expected values under the uniform distributions, for characteristics that have a CDF available.
 
 - `create_scatterplots.sage` and `create_histograms.py` to generate scatterplots and histograms comparing data from the uniform and nntm distributions.
-
