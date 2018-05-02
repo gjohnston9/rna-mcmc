@@ -49,11 +49,13 @@
 	- Note: The comparison of nntm experimental data to uniform experimental data when using the `--nntm` flag is the reason that both uniform and nntm parameters are required as command line arguments in that case.
 
 - After the appropriate data is in the `data/processed_plot_data` directory, use the `create_scatterplots.sage` and `create_histograms.py` scripts to create plots.
-	- `create_scatterplots.sage` creates scatterplots for characteristics that are integer-valued: ladder distance, height, contact distance sums, number of leaves, and root degree.
-	- `create_histograms.py` creates histograms for the other characteristics (which are non-negative and real-valued): average branching and contact distance averages.
+	- `create_scatterplots.sage`
+		- Creates scatterplots for characteristics that are integer-valued: ladder distance, height, contact distance sums, number of leaves, and root degree.
+		- Requires as command line arguments *n*, initial mixing time, gap size, and number of samples, followed by one of `--uniform` or `--nntm`.
+	- `create_histograms.py`
+		- Creates histograms for the other characteristics (which are non-negative and real-valued): average branching and contact distance averages.
+		- Requires as command line arguments *n*, uniform initial mixing time, gap size, and number of samples, and nntm initial mixing time, gap size, and number of samples.
 	- Both of these scripts save plots to the `plots` directory.
-	- `create_scatterplots.sage` requires as command line arguments *n*, initial mixing time, gap size, and number of samples, followed by one of `--uniform` or `--nntm`.
-	- `create_histograms.py` requires as command line arguments *n*, uniform initial mixing time, gap size, and number of samples, and nntm initial mixing time, gap size, and number of samples.
 
 ## Calculating statistics
 - Detailed descriptions of the uses of these scripts is in the **Experiments** section. This section describes instructions for use of these scripts and a short description of their functions.
@@ -96,8 +98,7 @@
 	- Compares the values obtained under either the uniform or nntm in `original_energy_function_calibration_runs`to the expected values under the uniform distribution. This tells us whether we can conclude that the distributions for any of these characteristics significantly differ under the uniform vs. the nntm distributions. A p-value below 0.05 means we can conclude this, but a p-value greater than or equal to 0.05 means we cannot make any conclusion.
 
 #### Determining mixing parameters for nntm distribution in the worst case, which we expect to lead to the slowest mixing times.
-- This is similar to the previous experiment, but uses nntm parameters -0.9, -1.8, -1.7, and -8.8.
-- See the previous experiment for a more detailed description of each step.
+- This is similar to the previous experiment, but uses nntm parameters -0.9, -1.8, -1.7, and -8.8. See the documentation for the previous experiment for more detailed descriptions of each step.
 - `write_polyhedron_vertices.py`
 - `new_energy_function_calibration_runs.sh`
 	- Runs `mcmc.py` four times with this new energy function.
