@@ -28,6 +28,7 @@ for (limit in limits) {
 				numSamples)
 
 			my_data = scan(filename, nmax=limit, quiet=TRUE)
+			cat(sprintf("limit is %d, length of data is %d\n", limit, length(my_data)))
 			stopifnot(length(my_data) != limit)
 
 			my_ess = effectiveSize(my_data) 
