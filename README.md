@@ -37,6 +37,10 @@
 
 - After the program finishes, data about frequencies of characteristics (how many times each characteristic had a certain value) is written to the `data/by_frequency` directory.
 
+- Additional arguments (optional):
+	- `--prefix PREFIX`: Attaches the given prefix to the beginning of all data files. Used in scripts that run `mcmc.py` multiple times so that the results are not overwritten each time.
+	- `--start_word_source START_WORD_SOURCE`: If specified, this file path will be used to load a text file containing the starting word. The file should only have one line, containing 1's and 0's with no spaces in between. If not specified, a starting word of [1]*n + [0]*n will be used. This argument is used for energy calibration experiments, to start the chain from structures that are far from each other.
+
 ## Creating plots
 - To plot data output by the chain, the first step is to run `write_plot_data.sage`. This has slightly different behavior depending on whether the `--uniform` or `--nntm` flag is used.
 	- With either flag, the first command line argument should be your value of *n* (1000 in most cases).
