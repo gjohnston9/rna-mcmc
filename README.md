@@ -11,6 +11,9 @@
 - We record characteristics of the structures that occur during the folding process, using the tree interpretation. For example, we consider tree height, root degree, and number of leaves.
 - We vary certain parameters of the energy function used to score structures, and observe how this changes the distribution of each characteristic we are interested in.
 
+#### Sample plot
+![](results/readme_height.png  "height plot")
+
 ## Dependencies
 - Python
 	- 2.6+
