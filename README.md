@@ -4,12 +4,12 @@
 
 #### Background
 - In this project, we represent RNA folding structures as [Dyck words](https://en.wikipedia.org/wiki/Dyck_language): strings of *n* 1's and *n* 0's such that no initial portion of the string contains more 0's than 1's. This is one of the structures that are enumerated by the [Catalan numbers](https://en.wikipedia.org/wiki/Catalan_number) - a tree representation is more intuitive for representing RNA structures, but the Dyck word representation is much easier to use for the purposes of this project.
-- We define a "0-1 move" between these structures as an exchange of a randomly selected 1 with a randomly selected 0, with the requirement that this exchange does not break the Dyck word property of not containing more 0's than 1's in any initial portion.
-- We use an energy function which assigns a thermodynamic score to each structure. A lower score means the structure is more energetically favorable, so as we model the dynamic folding of an RNA molecule into different structures, structures with lower scores are likely to be chosen over structures with higher scores.
+- We define a "0-1 move" on any of these structures as an exchange of a randomly selected 1 with a randomly selected 0, such that this exchange does not break the Dyck word property of not containing more 0's than 1's in any initial portion.
+- We use an energy function that assigns a thermodynamic score to each structure. A lower score means that the structure is more energetically favorable, so as we model the dynamic folding of an RNA molecule into different structures, structures with lower scores are more likely to form than structures with higher scores.
 
 #### Outputs
 - We record characteristics of the structures that occur during the folding process, using the tree interpretation. For example, we consider tree height, root degree, and number of leaves.
-- We vary certain parameters of the energy function used to score structures, and observe how this changes the distribution of each characteristic we are interested in.
+- We vary certain parameters of the energy function used to score structures, and observe how this changes the distribution of each characteristic that we are interested in.
 
 #### Sample plot
 ![](results/readme_height.png  "height plot")
